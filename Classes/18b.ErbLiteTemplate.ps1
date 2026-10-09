@@ -7,6 +7,7 @@
 #
 # Supported:
 #   tags        <%= expr %>, <% stmt %>, <%- stmt -%> (ERB trim_mode '-'), <%# comment %>
+#               (or trim_mode '>' for HTML/EPUB layouts, via the 3-argument constructor)
 #   statements  if / elsif / else / unless / end,  EXPR.each do |x| ... end
 #   expressions 'str', "str" (no interpolation), integers, nil/true/false,
 #               @ivar, local vars, x[expr] chains, [a, b] array literals,
@@ -36,10 +37,21 @@ class ReviewErbLiteTemplate {
     hidden [string] $SourceName
     hidden [System.Collections.Generic.List[ReviewErbNode]] $Root
     hidden [object] $EscapeFn
+    # '-' (pdfmaker's ERB.new(..., trim_mode: '-')) or '>' (ReVIEW::Template's default
+    # mode 1, used by the HTML/EPUB layouts: the newline after ANY tag that ends a line
+    # is dropped).
+    hidden [string] $TrimMode = '-'
 
     ReviewErbLiteTemplate([string]$Source, [string]$SourceName) {
         $this.Source = $Source
         $this.SourceName = $SourceName
+        $this.Root = $this.Parse($this.Tokenize($Source))
+    }
+
+    ReviewErbLiteTemplate([string]$Source, [string]$SourceName, [string]$TrimMode) {
+        $this.Source = $Source
+        $this.SourceName = $SourceName
+        $this.TrimMode = $TrimMode
         $this.Root = $this.Parse($this.Tokenize($Source))
     }
 
@@ -76,7 +88,7 @@ class ReviewErbLiteTemplate {
                 '#' { }
                 default { $tokens.Add(@{ Type = 'code'; Value = $code.Trim() }) }
             }
-            $skipNewline = ($m.Groups[3].Value -eq '-')
+            $skipNewline = ($this.TrimMode -eq '>') -or ($m.Groups[3].Value -eq '-')
             $pos = $m.Index + $m.Length
         }
         $tail = $Src.Substring($pos)

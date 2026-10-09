@@ -176,6 +176,9 @@ class ReviewCompiler {
         # registered by LATEXBuilder in Ruby (Compiler.defsingle(:latextsize, 1)); kept in
         # the global table here for the same reason as 'hd_chap' below
         & $defsingle 'latextsize' 1
+        # registered by HTMLBuilder in Ruby (Compiler.defblock(:planning, 0..1) etc.);
+        # review-epubmaker loads both builders, so they are global here too.
+        foreach ($n in 'planning', 'best', 'security', 'point', 'shoot') { & $defblock $n @(0, 1) $false }
 
         [ReviewCompiler]::Syntax = $syntaxTable
 
@@ -191,7 +194,9 @@ class ReviewCompiler {
             'idx', 'hidx', 'comment', 'include', 'embed', 'pageref', 'w', 'wb',
             # registered by LATEXBuilder in Ruby (Compiler.definline(:dtp/:hd_chap)); kept here
             # since our port's inline table is global/static rather than per-target-registered.
-            'hd_chap'
+            'hd_chap',
+            # registered by HTMLBuilder in Ruby 5.9.0 (Compiler.definline(:ref)).
+            'ref'
         )
         foreach ($n in $inlineNames) { $inlineTable[$n] = [ReviewInlineSyntaxElement]::new($n) }
         [ReviewCompiler]::Inline = $inlineTable

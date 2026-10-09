@@ -696,6 +696,10 @@ class ReviewBuilder {
                 $blocks[$blocks.Count - 1].Add($element)
             }
         }
-        return @($blocks | ForEach-Object { $this.join_lines_to_paragraph($_.ToArray()) })
+        $pre = $this.pre_paragraph()
+        $post = $this.post_paragraph()
+        $joined = @($blocks | ForEach-Object { $this.join_lines_to_paragraph($_.ToArray()) })
+        if ($pre -and $post) { return @($joined | ForEach-Object { "$pre$_$post" }) }
+        return $joined
     }
 }

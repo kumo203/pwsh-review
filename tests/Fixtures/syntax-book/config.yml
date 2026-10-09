@@ -8,6 +8,8 @@ history: [["2017-09-30", "2018-10-16"]]
 debug: true
 # PwshReview golden fixture: pin the otherwise-random urnid so oracle output is deterministic.
 urnid: urn:uuid:00000000-0000-4000-8000-000000000000
+# ...and the EPUB dcterms:modified timestamp (default: now).
+modified: "2018-10-16T00:00:00Z"
 stylesheet: ["style.css"]
 toclevel: 3
 secnolevel: 4

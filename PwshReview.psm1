@@ -27,6 +27,7 @@ $script:ClassFiles = @(
     'Classes/17.Converter.ps1'
     'Classes/18.LaTeXBox.ps1'
     'Classes/18b.ErbLiteTemplate.ps1'
+    'Classes/18c.HTMLBuilder.ps1'
     'Classes/20.ExternalProcessRunner.ps1'
     'Classes/19.PdfMaker.ps1'
 )
