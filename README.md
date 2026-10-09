@@ -11,14 +11,21 @@ below) rather than assuming a native TeX Live/MiKTeX install.
 
 ## Status
 
-**M0 and M1 are complete.** The module scaffold, exception hierarchy, line-reader, and
-Docker-backed process runner are in place, along with the `Configure`/`Catalog`/Book
-model. 35 Pester tests pass, and `Test-ReviewCatalog` correctly resolves the real
-[FirstStepReVIEW-v3](https://github.com/TechBooster/FirstStepReVIEW-v3) project's chapter
-order, numbering, and catalog membership end-to-end.
+**M0, M1, and M2 are complete; M3's core claim (cross-chapter references) is verified.**
+The module scaffold, Docker-backed process runner, `Configure`/`Catalog`/Book model, the
+full markup parser (`Compiler`), the pass-1 index builder, and a useful subset of the
+LaTeX builder (headlines, paragraphs, lists, captioned code blocks, footnotes, core
+inline formatting) are all in place and tested — 49 Pester tests pass.
 
-The Compiler (markup parser) and LaTeX builder — the bulk of the remaining work — have
-not been started yet. See [Roadmap](#roadmap) below.
+A representative chapter was compiled through this port and independently verified
+**byte-for-byte identical** against the real Ruby Re:VIEW running in the
+`review-oracle:5.9` Docker container (captured as a permanent regression test in
+`tests/Unit/LATEXBuilder.Tests.ps1`). Cross-chapter references (`@<chapref>`, `@<chap>`,
+`@<title>`, forward and backward) are verified against a 2-chapter fixture.
+
+Still to do: `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation` LaTeX rendering,
+the ERB template layer, and the actual PDF-maker orchestration that shells out to
+`uplatex`/`dvipdfmx`/`mendex`. See [Roadmap](#roadmap) below.
 
 ## Scope (v1)
 
@@ -94,18 +101,19 @@ Classes/
   08.Chapter.ps1             # book/chapter.rb
   09.Part.ps1                # book/part.rb
   10.BookBase.ps1            # the "project" object: catalog parsing, Parts/Chapters tree (book/base.rb)
+  11.SecCounter.ps1          # per-chapter heading/section counter (sec_counter.rb)
+  12.LaTeXEscaper.ps1        # LaTeX escaping (composed into the LaTeX builder, not inherited)
+  13.Compiler.ps1            # markup parser: SYNTAX/INLINE dispatch tables, do_compile loop
+  14.Builder.ps1             # builder base class
+  15.IndexBuilder.ps1        # pass-1 silent indexing builder
+  16.LATEXBuilder.ps1        # pass-2 LaTeX builder (M2 subset -- see Status)
+  17.Converter.ps1           # one Compiler + one Builder instance per book
   20.ExternalProcessRunner.ps1  # Docker-backed shell-out layer (see below)
   [planned, not yet implemented — see Roadmap:]
-  11.Compiler.ps1            # markup parser: SYNTAX/INLINE dispatch tables
-  12.Builder.ps1             # builder base class
-  13.IndexBuilder.ps1        # pass-1 silent indexing builder
-  14.LaTeXEscaper.ps1        # LaTeX escaping (composed into the LaTeX builder, not inherited)
-  15.LATEXBuilder.ps1        # pass-2 LaTeX builder
-  16.LaTeXBox.ps1            # tcolorbox minicolumn styling
-  17.ErbLiteTemplate.ps1     # restricted ERB-subset interpreter for project-local overrides
-  18.LatexTemplates.ps1      # hand-ported config.erb / layout.tex.erb equivalents
-  19.Converter.ps1           # one Compiler + one Builder instance per book
-  21.PdfMaker.ps1            # orchestration (mirrors review/lib/review/pdfmaker.rb)
+  LaTeXBox.ps1               # tcolorbox minicolumn styling
+  ErbLiteTemplate.ps1        # restricted ERB-subset interpreter for project-local overrides
+  LatexTemplates.ps1         # hand-ported config.erb / layout.tex.erb equivalents
+  PdfMaker.ps1               # orchestration (mirrors review/lib/review/pdfmaker.rb)
 Public/
   Test-ReviewCatalog.ps1     # load + validate a book's catalog.yml (implemented)
   [planned:] Invoke-ReviewPdfMaker.ps1, ConvertTo-ReviewLatex.ps1
@@ -113,7 +121,8 @@ Resources/
   i18n/i18n.yml              # locale data (copied from review/lib/review/i18n.yml)
   [planned:] latex/review-jsbook/*, latex/review-jlreq/*
 tests/
-  Unit/           # Pester, fast, no Docker
+  Unit/           # Pester, fast, no Docker -- includes a golden-diff regression test
+                  # captured from a real review-oracle:5.9 run (see Status)
   Integration/    # Pester, Docker-gated (skips if Docker unavailable)
   [planned:] Golden/, tools/Update-GoldenFixtures.ps1
 ```
@@ -141,6 +150,27 @@ documented in code comments where they bite:
   depends on.
 - Internal classes are **not exported**; the module's real surface is `Public/*.ps1`
   cmdlets. Tests reach internals via Pester's `InModuleScope PwshReview`.
+- **A parameter literally named `$Args`/`$args` collides with PowerShell's automatic
+  per-scriptblock `$args` variable and silently fails to bind** — no parse error, no
+  runtime error, it just never receives the caller's value. This bit the Compiler's
+  argument-count checker, the LaTeX `macro()` escaper (silently dropped every `{...}`
+  argument), and `ReviewI18n`'s sprintf-style formatter (silently dropped every `%s`/`%d`
+  substitution — the kind of bug a test can mask entirely if it asserts against a second
+  call to the same broken function instead of a literal expected string). Renamed to
+  `$ArgList`/`$MacroArgs`/`$FormatArgs` throughout.
+- **`$this` inside a scriptblock resolves dynamically by call stack, not lexically.**
+  Defining a scriptblock inside method A, then invoking it via `& $sb` from inside
+  method B of a *different* class (e.g. passing a callback into `ReviewLineInput`'s
+  `WhileMatch`/`UntilMatch`) rebinds `$this` to B's own instance, not A's — confirmed
+  empirically, not documented anywhere obvious. Fixed by capturing `$self = $this` as a
+  plain variable before defining any such scriptblock, and referencing `$self` inside it.
+  `.GetNewClosure()` does not fix this — it actually breaks `$this` resolution inside a
+  class method scriptblock differently (returns empty), so it's avoided entirely.
+- **A single-match `[regex]::Matches(...) | ForEach-Object {...}` collapses to a scalar**
+  (PowerShell's single-item-pipeline-result unwrapping), so `$result[0]` silently indexes
+  a *character* out of the resulting string instead of the first array element — no
+  error, just a wrong-typed value a few lines later. Force array wrapping with `@(...)`
+  whenever the result might be indexed.
 
 ### Two-pass compile/index architecture
 
@@ -187,10 +217,17 @@ Each milestone is independently demonstrable:
 - [x] **M1 — Configure + Catalog + Book model.** `Test-ReviewCatalog` prints the correct
       ordered chapter list and maker-shadowed config overrides resolve correctly, against
       the real `FirstStepReVIEW-v3` fixture.
-- [ ] **M2 — Compiler + LaTeX builder, single-pass, useful subset.** Headlines,
-      paragraphs, `//list`/`//emlist`, a handful of inline ops, lists.
-- [ ] **M3 — Two-pass index builder wired in.** Cross-chapter `@<img>`/`@<chapref>`/
-      `@<list>`/`@<fn>` resolve forward and backward.
+- [x] **M2 — Compiler + LaTeX builder, useful subset.** Headlines (+nonum/notoc/nodisp/
+      column), paragraphs, ul/ol/dl lists, `//list`/`//emlist`/`//listnum`/`//emlistnum`/
+      `//source`/`//cmd`, footnotes, and core inline ops (b/code/tt/em/strong/i/u/sub/sup/
+      href/kw/ruby/br/...). Verified byte-for-byte against the Ruby oracle for a
+      representative chapter. `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation`
+      deferred to M5.
+- [x] **M3 — Two-pass index builder wired in (core claim verified).** Cross-chapter
+      `@<chapref>`/`@<chap>`/`@<title>` resolve forward and backward against a 2-chapter
+      fixture. (`@<img>`/`@<list>` numbering works the same way once M5 adds image/table
+      rendering; the underlying index machinery is already exercised by `//list`'s own
+      caption-numbering path.)
 - [ ] **M4 — Real PDF output for a minimal fixture.** The hand-ported templates plus the
       Docker-backed process runner wired into the full build sequence, producing a real
       `.pdf`. First milestone that requires Docker Desktop running.
