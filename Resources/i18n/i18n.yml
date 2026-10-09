@@ -1,0 +1,249 @@
+ja:
+  image: 図
+  table: 表
+  list: リスト
+  equation: 式
+  column: "コラム「%s」"
+  columnname: "コラム"
+  column_head: "■コラム"
+  part: 第%pR部
+  part_short: "%pR"
+  chapter: 第%d章
+  chapter_short: "%d"
+  chapter_postfix: "　"
+  chapter_quote: "%s「%s」"
+  chapter_quote_without_number: "「%s」"
+  hd_quote: "「%s %s」"
+  hd_quote_without_number: "「%s」"
+  appendix: 付録%pA
+  numberless_image: "図:"
+  note_head: NOTE
+  tip_head: TIP
+  info_head: INFORMATION
+  warning_head: WARNING
+  important_head: IMPORTANT
+  caution_head: CAUTION
+  notice_head: NOTICE
+  memo_head: MEMO
+  format_number: "%s.%d"
+  format_number_header: "%s.%d:"
+  format_number_without_chapter: "%d"
+  format_number_header_without_chapter: "%d:"
+  image_quote: "「%s」"
+  caption_prefix: " "
+  caption_prefix_idgxml: "　"
+  ruby_prefix: "（"
+  ruby_postfix: "）"
+  external_link: "%s（%s）"
+  label_marker: "●●　"
+  html_footnote_refmark: "*%s"
+  html_footnote_textmark: "[*%s] "
+  html_footnote_backmark: "⏎"
+  html_endnote_refmark: "(%s)"
+  html_endnote_textmark: "(%s) "
+  aut: "著　者"
+  csl: "監　修"
+  dsr: "デザイン"
+  ill: "イラスト"
+  cov: "表　紙"
+  edt: "編　集"
+  pht: "撮　影"
+  trl: "翻　訳"
+  ## XXX Breaking Change: now `prt` is "印刷所", not "発行所"
+  prt: "印刷所"
+  pbl: "発行所"
+  contact: "連絡先"
+  author_with_label: "%s　著"
+  supervisor_with_label: "%s　監修"
+  translator_with_label: "%s　訳"
+  names_splitter: "、"
+  edition: "版"
+  nth_edition: "第%s版"
+  first_edition: "初版"
+  nth_impression: "第%s刷"
+  published_by: "%s 発行"
+  published_by1: "%s　%s　発行"
+  published_by2: "%s　発行"
+  published_by3: "%s　%s"
+  date_format: '%%Y年%%-m月%%-d日'
+  toctitle: "目次"
+  covertitle: "表紙"
+  titlepagetitle: "大扉"
+  originaltitle: "原書大扉"
+  credittitle: "クレジット"
+  colophontitle: "奥付"
+  advtitle: "広告"
+  profiletitle: "著者紹介"
+  backcovertitle: "裏表紙"
+  "!! No *.yml file with 'review_version' was found. Aborted. !!": "!! 'review_version' を持つ *.yml ファイルが見つかりませんでした。中止します。 !!"
+  "!! %s file(s) is obsoleted. Run 'review-catalog-converter' to convert to 'catalog.yml' and remove old files. Aborted. !!": "!! %s ファイルはもう使われません。'review-catalog-converter' を実行して 'catalog.yml' に変換し、古いファイルは削除してください。中止します。 !!"
+  "** review-update updates your project to %s **": "** review-update はプロジェクトを %s に更新します **"
+  "** There is custom layouts/layout.tex.erb file. Updating  may break to make PDF until you fix layout.tex.erb. Do you really proceed to update? **": "** 固有の layouts/layout.tex.erb ファイルが存在します。プロジェクトを更新した後、このファイルを修正しないと、PDF の生成に問題が生じるかもしれません。本当に進めますか? **"
+  "** There is review-ext.rb file. You need to update it by yourself. **": "** review-ext.rb ファイルが存在します。このファイルはご自身で更新してください。 **"
+  "%s: Update '%s' to '%s'?": "%s: '%s' を '%s' に更新しますか?"
+  "%s will be overridden with Re:VIEW version (%s). Do you really proceed?": "%s は Re:VIEW バージョンのもの (%s) で置き換えられます。本当に進めますか?"
+  "%s: 'chapter_quote' now takes 2 values. Update '%s' to '%s'?": "%s: 'chapter_quote' は2つの値を取るようになりました。'%s' を '%s' に更新しますか?"
+  "%s: !! 'texdocumentclass' uses new class '%s' already, but you specified '%s'. This tool can't handle such migration. Ignored. !!": "%s: !! 'texdocumentclass' は新クラス '%s' をすでに使うようになっていますが、'%s' が指定されました。このツールはそのような移行には対応していません。無視します。 !!"
+  "%s: 'texdocumentclass' uses the old class '%s'. By default it is migrated to '%s', but you specify '%s'. Do you really migrate 'texdocumentclass' to '%s'?": "%s: 'texdocumentclass' は旧クラス '%s' を使っています。デフォルトの移行先は '%s' ですが、'%s' が指定されました。本当に 'texdocumentclass' を '%s' に移行しますか?"
+  "%s: 'texdocumentclass' uses the old class '%s'. By default it is migrated to '%s'. Do you really migrate 'texdocumentclass' to '%s'?": "%s: 'texdocumentclass' は旧クラス '%s' を使っています。デフォルトの移行先は '%s' です。本当に 'texdocumentclass' を '%s' に移行しますか?"
+  "%s: previous 'texdocumentclass' option '%s' is safely replaced with '%s'.": "%s: 'texdocumentclass' の古いオプション '%s' は '%s' に安全に置き換えられました。"
+  "%s: previous 'texdocumentclass' option '%s' couldn't be converted fully. '%s' is suggested. Do you really proceed?": "%s: 'texdocumentclass' の古いオプション '%s' は完全には置き換えできませんでした。'%s' を提案します。本当に進めますか?"
+  "%s: ** 'texdocumentclass' specifies '%s'. Because this is unknown class for this tool, you need to update it by yourself if it won't work. **": "%s: ** 'texdocumentclass' はクラス '%s' を指定しています。このツールには未知のクラスなので、もし動作しないようであればご自身で更新する必要があります。 **"
+  "%s: ** '%s' is unknown class. Ignored. **": "%s: ** '%s' は未知のクラスです。無視します。 **"
+  "%s: 'texcommand' has options ('%s'). Move it to 'texoptions'?": "%s: 'texcommand' にオプションがあります ('%s')。'texoptions' に移動しますか?"
+  "%s: 'dvicommand' has options ('%s'). Move it to 'dvioptions'?": "%s: 'dvicommand' にオプションがあります ('%s')。'dvioptions' に移動しますか?"
+  "Finished.": "完了しました。"
+  "new file %s is created.": "新しいファイル %s が作成されました。"
+
+en:
+  image: "Figure "
+  table: "Table "
+  list: "List "
+  equation: "Equation "
+  column: "Column %s"
+  columnname: "Column"
+  column_head: "Column"
+  part: "Part %pR"
+  part_short: "%pR"
+  chapter: Chapter %d
+  chapter_short: "%d"
+  chapter_postfix: ". "
+  chapter_quote: '%s "%s"'
+  chapter_quote_without_number: '"%s"'
+  hd_quote: '"%s %s"'
+  hd_quote_without_number: '"%s"'
+  appendix: Appendix %s
+  numberless_image: "Figure:"
+  note_head: NOTE
+  tip_head: TIP
+  info_head: INFORMATION
+  warning_head: WARNING
+  important_head: IMPORTANT
+  caution_head: CAUTION
+  notice_head: NOTICE
+  memo_head: MEMO
+  format_number: "%s.%d"
+  format_number_header: "%s.%d:"
+  format_number_without_chapter: "%d"
+  format_number_header_without_chapter: "%d:"
+  image_quote: '"%s"'
+  caption_prefix: " "
+  caption_prefix_idgxml: "　"
+  external_link: "%s (%s)"
+  ruby_prefix: "("
+  ruby_postfix: ")"
+  label_marker: "●●　"
+  html_footnote_refmark: "*%s"
+  html_footnote_textmark: "[*%s] "
+  html_footnote_backmark: "⏎"
+  html_endnote_refmark: "(%s)"
+  html_endnote_textmark: "(%s) "
+  aut: "Author"
+  csl: "Consultant"
+  dsr: "Design"
+  ill: "Illustrator"
+  cov: "Cover"
+  edt: "Editor"
+  pht: "Director of Photography"
+  trl: "Translator"
+  prt: "Printer"
+  pbl: "Publisher"
+  contact: "Contact"
+  author_with_label: "Author: %s"
+  supervisor_with_label: "Supervisor: %s"
+  translator_with_label: "Translator: %s"
+  names_splitter: ", "
+  edition: "edition"
+  impression: "impression"
+  nth_edition: "%s edition"
+  first_edition: "first edition"
+  nth_impression: "%s impression"
+  published_by: "%s"
+  published_by1: "published by %s %s"
+  published_by2: "published by %s"
+  published_by3: "%s %s"
+  date_format: '%%b. %%e, %%Y'
+  toctitle: "Table of Contents"
+  covertitle: "Cover"
+  titlepagetitle: "Title Page"
+  originaltitle: "Title Page of Original"
+  credittitle: "Credit"
+  colophontitle: "Colophon"
+  advtitle: "Advertisement"
+  profiletitle: "Profile"
+  backcovertitle: "Back Cover"
+
+zh-TW:
+  image: 圖
+  table: 表
+  list: "List "
+  equation: "Equation "
+  column: "Column %s"
+  columnname: "Column"
+  column_head: "Column"
+  part: 第%pR部份
+  part_short: "%pR"
+  chapter: 第%d章
+  chapter_short: "%d"
+  chapter_postfix: "　"
+  chapter_quote: "%s「%s」"
+  chapter_quote_without_number: "「%s」"
+  hd_quote: "「%s %s」"
+  hd_quote_without_number: "「%s」"
+  appendix: 附錄%s
+  numberless_image: "圖:"
+  note_head: NOTE
+  tip_head: TIP
+  info_head: INFORMATION
+  warning_head: WARNING
+  important_head: IMPORTANT
+  caution_head: CAUTION
+  notice_head: NOTICE
+  memo_head: MEMO
+  format_number: "%s.%d"
+  format_number_header: "%s.%d:"
+  format_number_without_chapter: "%d"
+  format_number_header_without_chapter: "%d:"
+  image_quote: '"%s"'
+  caption_prefix: " "
+  caption_prefix_idgxml: "　"
+  ruby_prefix: "（"
+  ruby_postfix: "）"
+  external_link: "%s (%s)"
+  label_marker: "●●　"
+  html_footnote_refmark: "*%s"
+  html_footnote_textmark: "[*%s] "
+  html_footnote_backmark: "⏎"
+  html_endnote_refmark: "(%s)"
+  html_endnote_textmark: "(%s) "
+  aut: "著作人"
+  csl: "監　修"
+  dsr: "美術編輯"
+  ill: "插　畫"
+  cov: "封面設計"
+  edt: "編　輯"
+  pht: "攝　影"
+  trl: "翻　譯"
+  prt: "印刷所"
+  pbl: "發行所"
+  contact: "联系方式"
+  author_with_label: "%s　著"
+  supervisor_with_label: "%s　監修"
+  translator_with_label: "%s　譯"
+  names_splitter: ", "
+  edition: "版"
+  published_by: "%s 出版"
+  published_by1: "%s %s 出版"
+  published_by2: "%s 出版"
+  published_by3: "%s %s"
+  date_format: '%%Y年%%-m月%%-d日'
+  impression: "刷"
+  toctitle: "目次"
+  covertitle: "封面"
+  titlepagetitle: "標題頁"
+  originaltitle: "原標題頁"
+  credittitle: "Credit"
+  colophontitle: "版權頁"
+  advtitle: "廣告"
+  profiletitle: "作者介紹"
+  backcovertitle: "封底"

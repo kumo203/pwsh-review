@@ -1,0 +1,15 @@
+# PowerShell / Pester
+*.Tests.ps1.orig
+TestResults.xml
+testResults.xml
+
+# Scratch / temp
+*.tmp
+_smoketest.ps1
+
+# Docker build context noise (not expected here, but just in case)
+.docker/
+
+# OS noise
+Thumbs.db
+.DS_Store
