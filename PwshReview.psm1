@@ -16,6 +16,7 @@ $script:ClassFiles = @(
     'Classes\07.BookUnit.ps1'
     'Classes\08.Chapter.ps1'
     'Classes\09.Part.ps1'
+    'Classes\09b.Bib.ps1'
     'Classes\10.BookBase.ps1'
     'Classes\11.SecCounter.ps1'
     'Classes\12.LaTeXEscaper.ps1'
@@ -25,6 +26,7 @@ $script:ClassFiles = @(
     'Classes\16.LATEXBuilder.ps1'
     'Classes\17.Converter.ps1'
     'Classes\18.LaTeXBox.ps1'
+    'Classes\18b.ErbLiteTemplate.ps1'
     'Classes\20.ExternalProcessRunner.ps1'
     'Classes\19.PdfMaker.ps1'
 )

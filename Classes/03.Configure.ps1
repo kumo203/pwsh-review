@@ -291,7 +291,7 @@ class ReviewConfigure {
 
     [object] NameOf([string]$Key) {
         $value = $this.Get($Key)
-        if ($value -is [array]) {
+        if ($value -is [System.Collections.IList]) {
             return ($value -join ',')
         }
         elseif ($value -is [hashtable]) {
@@ -304,7 +304,7 @@ class ReviewConfigure {
 
     [string[]] NamesOf([string]$Key) {
         $value = $this.Get($Key)
-        if ($value -is [array]) {
+        if ($value -is [System.Collections.IList]) {
             return @($value | ForEach-Object {
                 if ($_ -is [hashtable]) { $_['name'] } else { $_ }
             })

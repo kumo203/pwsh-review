@@ -1,0 +1,37 @@
+\chapter{前書き}
+\label{chap:pre01}
+
+PREDEF内に列挙したものは前付として章採番なしです。後付のPOSTDEFも同様。
+
+PREDEF内/POSTDEFのリストの採番表記は「リスト1」のようになります: \reviewlistref{1}
+
+（正確にはi18n.yml/locale.ymlのformat\textunderscore{}number\textunderscore{}header\textunderscore{}without\textunderscore{}chapterが使われます）
+
+\begin{reviewlistblock}
+\reviewlistcaption{リスト1: main()}
+\begin{reviewlist}
+int
+main(int argc, char **argv)
+\{
+    puts("OK");
+    return 0;
+\}
+\end{reviewlist}
+\end{reviewlistblock}
+
+図（\reviewimageref{1}{image:pre01:fractal}）、表（\reviewtableref{1}{table:pre01:tbl1}）も同様に章番号なしです。
+
+\begin{reviewimage}%%fractal
+\reviewincludegraphics[width=80mm]{images/fractal.png}
+\reviewimagecaption{フラクタル}
+\label{image:pre01:fractal}
+\end{reviewimage}
+\begin{table}%%tbl1
+\reviewtablecaption{前付表}
+\label{table:pre01:tbl1}
+\begin{reviewtable}{|l|l|}
+\hline
+\reviewth{A} & \reviewth{B} \\  \hline
+C & D \\  \hline
+\end{reviewtable}
+\end{table}

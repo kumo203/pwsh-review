@@ -59,6 +59,13 @@ class ReviewSyntaxElement {
         return $this.ArgcSpec[0]
     }
 
+    # Commands declared with an exact argc of 0 (//quote, //hr, //noindent, ...) are
+    # dispatched WITHOUT the (always-empty) $ArgList -- mirroring Ruby's
+    # send(name, lines, *[]) / send(name, *[]) -- so their builder methods take just
+    # (lines) or () respectively, rather than every zero-arg method having to accept
+    # and ignore an empty array parameter.
+    [bool] IsNoArg() { return ($this.ArgcSpec -is [int]) -and ($this.ArgcSpec -eq 0) }
+
     [bool] IsMinicolumn() { return $this.Type -eq 'minicolumn' }
     [bool] BlockRequired() { return $this.Type -eq 'block' -or $this.Type -eq 'minicolumn' }
     [bool] BlockAllowed() { return $this.Type -eq 'block' -or $this.Type -eq 'optional' -or $this.Type -eq 'minicolumn' }
@@ -78,10 +85,14 @@ class ReviewCompiler {
     hidden [object] $Chapter
     hidden [bool] $IgnoreErrors
     hidden [bool] $CompileErrors = $false
-    hidden [string[]] $CommandNameStack = @()
+    # Real List-backed stacks, NOT arrays sliced with $a[0..($a.Count - 2)] to "pop":
+    # for a 1-element array PowerShell's 0..-1 is a DESCENDING range [0, -1] that
+    # returns 2 elements, not 0 -- so the stack never empties. That turned every
+    # =[column]/=[nonum] tagged section into an infinite loop (found via syntax-book).
+    hidden [System.Collections.Generic.List[string]] $CommandNameStack = [System.Collections.Generic.List[string]]::new()
     hidden [string[]] $NonParsedCommands = @('embed', 'texequation', 'graph')
     hidden [string] $MinicolumnName = $null
-    hidden [object[]] $TaggedSection = @()
+    hidden [System.Collections.Generic.List[object]] $TaggedSection = [System.Collections.Generic.List[object]]::new()
     hidden [int[]] $HeadlineIndexes = $null
     [string] $PreviousListType = $null
 
@@ -162,6 +173,9 @@ class ReviewCompiler {
         & $defsingle 'firstlinenum' 1
         & $defsingle 'beginchild' 0
         & $defsingle 'endchild' 0
+        # registered by LATEXBuilder in Ruby (Compiler.defsingle(:latextsize, 1)); kept in
+        # the global table here for the same reason as 'hd_chap' below
+        & $defsingle 'latextsize' 1
 
         [ReviewCompiler]::Syntax = $syntaxTable
 
@@ -172,7 +186,9 @@ class ReviewCompiler {
             'href', 'recipe', 'column', 'tcy', 'balloon',
             'abbr', 'acronym', 'cite', 'dfn', 'em', 'kbd', 'q', 'samp', 'strong', 'var', 'big', 'small',
             'del', 'ins', 'sup', 'sub', 'tt', 'i', 'tti', 'ttb', 'u', 'raw', 'br', 'm', 'uchar',
-            'idx', 'hidx', 'comment', 'include', 'embed', 'pageref', 'w', 'wb', 'labelref', 'ref',
+            # (no 'labelref'/'ref': those inline ops were added after Re:VIEW 5.9.0, the
+            # version this port and its Docker oracle target)
+            'idx', 'hidx', 'comment', 'include', 'embed', 'pageref', 'w', 'wb',
             # registered by LATEXBuilder in Ruby (Compiler.definline(:dtp/:hd_chap)); kept here
             # since our port's inline table is global/static rather than per-target-registered.
             'hd_chap'
@@ -211,7 +227,7 @@ class ReviewCompiler {
         $this.Builder.bind($this, $this.Chapter, $f)
         $this.PreviousListType = $null
         $this.MinicolumnName = $null
-        $this.TaggedSection = @()
+        $this.TaggedSection.Clear()
 
         while ($f.Next()) {
             $peek = $f.Peek()
@@ -255,7 +271,11 @@ class ReviewCompiler {
                 if ($m.Success -and $this.IsMinicolumnName($m.Groups[1].Value)) {
                     $line = $f.Gets()
                     $name = $m.Groups[1].Value
-                    $args = $this.ParseArgs(($line -replace '^//[a-z]+', '').TrimEnd() -replace '\{$', '')
+                    # Precompute: inside a method call's parens, the comma in an
+                    # unparenthesized `-replace 'x', ''` operand is parsed as an argument
+                    # separator, silently passing TWO arguments to ParseArgs.
+                    $minicolumnArgStr = (($line -replace '^//[a-z]+', '').TrimEnd()) -replace '\{$', ''
+                    $args = $this.ParseArgs($minicolumnArgStr)
                     $this.CompileMinicolumnBegin($name, $(if ($args.Count -gt 0) { $args[0] } else { $null }))
                 }
                 else {
@@ -342,8 +362,8 @@ class ReviewCompiler {
                     $this.Error("$openTag is not opened.")
                 }
                 else {
-                    $prev = $this.TaggedSection[-1]
-                    $this.TaggedSection = $this.TaggedSection[0..($this.TaggedSection.Count - 2)]
+                    $prev = $this.TaggedSection[$this.TaggedSection.Count - 1]
+                    $this.TaggedSection.RemoveAt($this.TaggedSection.Count - 1)
                     if ($prev.Tag -ne $openTag) {
                         $this.Error("$openTag is not opened.")
                     }
@@ -371,9 +391,9 @@ class ReviewCompiler {
     }
 
     hidden [void] CloseCurrentTaggedSection([int]$Level) {
-        while ($this.TaggedSection.Count -gt 0 -and $this.TaggedSection[-1].Level -ge $Level) {
-            $top = $this.TaggedSection[-1]
-            $this.TaggedSection = $this.TaggedSection[0..($this.TaggedSection.Count - 2)]
+        while ($this.TaggedSection.Count -gt 0 -and $this.TaggedSection[$this.TaggedSection.Count - 1].Level -ge $Level) {
+            $top = $this.TaggedSection[$this.TaggedSection.Count - 1]
+            $this.TaggedSection.RemoveAt($this.TaggedSection.Count - 1)
             $this.CloseTaggedSection($top.Tag, $top.Level)
         }
     }
@@ -385,7 +405,7 @@ class ReviewCompiler {
             $this.Builder.headline($Level, $Label, $Caption)
             return
         }
-        $this.TaggedSection += [PSCustomObject]@{ Tag = $Tag; Level = $Level }
+        $this.TaggedSection.Add([PSCustomObject]@{ Tag = $Tag; Level = $Level })
         $this.Builder.$mid($Level, $Label, $Caption)
     }
 
@@ -401,8 +421,8 @@ class ReviewCompiler {
 
     hidden [void] CloseAllTaggedSection() {
         while ($this.TaggedSection.Count -gt 0) {
-            $top = $this.TaggedSection[-1]
-            $this.TaggedSection = $this.TaggedSection[0..($this.TaggedSection.Count - 2)]
+            $top = $this.TaggedSection[$this.TaggedSection.Count - 1]
+            $this.TaggedSection.RemoveAt($this.TaggedSection.Count - 1)
             $this.CloseTaggedSection($top.Tag, $top.Level)
         }
     }
@@ -530,13 +550,18 @@ class ReviewCompiler {
         $line = $F.Gets()
         $name = [regex]::Match($line, '[a-z]+').Value
         $ignoreInline = $this.NonParsedCommands -contains $name
-        $this.CommandNameStack += $name
+        $this.CommandNameStack.Add($name)
         $argStr = (($line -replace '^//[a-z]+', '').TrimEnd()) -replace '\{$', ''
         $args = $this.ParseArgs($argStr)
         $this.Builder.doc_status.$name = $true
-        $lines = if ($this.BlockOpen($line)) { $this.ReadBlock($F, $ignoreInline) } else { $null }
+        # Assigned directly, NOT via `$lines = if (...) { $this.ReadBlock(...) }`: an if-
+        # expression routes its output through the pipeline, where an EMPTY array emits
+        # nothing -- so an empty-but-present block (//imgtable[...]{ //}) would come back
+        # as $null and be misreported as "block is required".
+        $lines = $null
+        if ($this.BlockOpen($line)) { $lines = $this.ReadBlock($F, $ignoreInline) }
         $this.Builder.doc_status.$name = $null
-        $this.CommandNameStack = $this.CommandNameStack[0..($this.CommandNameStack.Count - 2)]
+        $this.CommandNameStack.RemoveAt($this.CommandNameStack.Count - 1)
         return [PSCustomObject]@{ Name = $name; Args = $args; Lines = $lines }
     }
 
@@ -628,7 +653,12 @@ class ReviewCompiler {
     hidden [void] CompileBlock([ReviewSyntaxElement]$SyntaxElem, [string[]]$ArgList, [string[]]$Lines) {
         $effectiveLines = if ($null -ne $Lines) { $Lines } else { $this.DefaultBlock($SyntaxElem) }
         $methodName = $SyntaxElem.Name
-        $this.Builder.$methodName($effectiveLines, $ArgList)
+        if ($SyntaxElem.IsNoArg()) {
+            $this.Builder.$methodName($effectiveLines)
+        }
+        else {
+            $this.Builder.$methodName($effectiveLines, $ArgList)
+        }
     }
 
     hidden [string[]] DefaultBlock([ReviewSyntaxElement]$SyntaxElem) {
@@ -640,7 +670,12 @@ class ReviewCompiler {
 
     hidden [void] CompileSingle([ReviewSyntaxElement]$SyntaxElem, [string[]]$ArgList) {
         $methodName = $SyntaxElem.Name
-        $this.Builder.$methodName($ArgList)
+        if ($SyntaxElem.IsNoArg()) {
+            $this.Builder.$methodName()
+        }
+        else {
+            $this.Builder.$methodName($ArgList)
+        }
     }
 
     hidden [string] ReplaceFence([string]$Str) {
@@ -661,7 +696,7 @@ class ReviewCompiler {
 
     hidden [bool] InNonEscapedCommand() {
         if ($this.CommandNameStack.Count -eq 0) { return $false }
-        $current = $this.CommandNameStack[-1]
+        $current = $this.CommandNameStack[$this.CommandNameStack.Count - 1]
         $nonEscaped = if ($this.Builder.highlight()) { @('list', 'emlist', 'listnum', 'emlistnum', 'cmd', 'source') } else { @() }
         return $nonEscaped -contains $current
     }

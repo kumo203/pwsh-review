@@ -1,0 +1,5 @@
+# Golden .tex files, fixtures and vendored LaTeX resources are compared/copied
+# byte-for-byte against Ruby Re:VIEW output (LF). Never let core.autocrlf rewrite them.
+tests/Golden/**    -text
+tests/Fixtures/**  -text
+Resources/**       -text

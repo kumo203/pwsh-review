@@ -48,9 +48,11 @@ Describe 'Cross-chapter reference resolution' {
             $ch02 = "= Second Chapter`n`nbody.`n"
             $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
 
-            # chapter_quote format is "%s「%s」" -- number + title in guillemets
-            $results['ch01'].Contains('第2章') | Should -BeTrue
-            $results['ch01'].Contains('Second Chapter') | Should -BeTrue
+            # Exact line verified against the review-oracle:5.9 Docker oracle. (An earlier
+            # version of this test only checked substrings like '第2章', which kept
+            # passing even while the \reviewchapref{}{} hyperlink wrapping that
+            # LATEXBuilder applies under the default chapterlink: true was missing.)
+            $results['ch01'].Contains('See \reviewchapref{第2章「Second Chapter」}{chap:ch02} for more.') | Should -BeTrue
         }
 
         It 'resolves a BACKWARD chapref from chapter 2 to chapter 1' {
@@ -58,17 +60,16 @@ Describe 'Cross-chapter reference resolution' {
             $ch02 = "= Second Chapter`n`nSee @<chapref>{ch01} first.`n"
             $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
 
-            $results['ch02'].Contains('第1章') | Should -BeTrue
-            $results['ch02'].Contains('First Chapter') | Should -BeTrue
+            $results['ch02'].Contains('See \reviewchapref{第1章「First Chapter」}{chap:ch01} first.') | Should -BeTrue
         }
 
-        It 'resolves chap across chapters (renders via format_number(heading=true), i.e. with the kanji chapter prefix -- confirmed against Ruby''s ChapterIndex#number/Chapter#format_number source)' {
+        It 'resolves chap across chapters (format_number(heading=true), wrapped in \reviewchapref -- verified against the Docker oracle)' {
             $ch01 = "= First Chapter`n`nNext is @<chap>{ch02}.`n"
             $ch02 = "= Second Chapter`n`nPrev was @<chap>{ch01}.`n"
             $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
 
-            $results['ch01'].Contains('Next is 第2章.') | Should -BeTrue
-            $results['ch02'].Contains('Prev was 第1章.') | Should -BeTrue
+            $results['ch01'].Contains('Next is \reviewchapref{第2章}{chap:ch02}.') | Should -BeTrue
+            $results['ch02'].Contains('Prev was \reviewchapref{第1章}{chap:ch01}.') | Should -BeTrue
         }
 
         It 'resolves title across chapters' {
@@ -76,7 +77,7 @@ Describe 'Cross-chapter reference resolution' {
             $ch02 = "= Second Chapter`n`nbody.`n"
             $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
 
-            $results['ch01'].Contains('Second Chapter') | Should -BeTrue
+            $results['ch01'].Contains('Title of next: \reviewchapref{Second Chapter}{chap:ch02}') | Should -BeTrue
         }
 
         It 'resolves a cross-chapter @<list> reference (ch01 -> a list numbered/captioned in ch02)' {

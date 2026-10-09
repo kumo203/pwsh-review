@@ -31,7 +31,7 @@ class ReviewBuilder {
     hidden [hashtable] $Dictionary
     hidden [bool] $ShownEndnotes = $true
     hidden [Nullable[int]] $TabWidth = $null
-    hidden [Nullable[int]] $FirstLineNum = $null
+    hidden [Nullable[int]] $FirstLineNumValue = $null
     hidden [System.Collections.Generic.List[string]] $Children = $null
 
     ReviewBuilder() { $this.Init($false) }
@@ -90,7 +90,12 @@ class ReviewBuilder {
     }
 
     [void] print([string]$S) { [void]$this.Output.Append($S) }
-    [void] puts([string]$S) { [void]$this.Output.Append($S).Append("`n") }
+    # Ruby's puts appends a newline only when the string doesn't already end with one
+    # (puts "a\n" writes "a\n", not "a\n\n"; puts "\n" writes a single "\n").
+    [void] puts([string]$S) {
+        [void]$this.Output.Append($S)
+        if (-not $S.EndsWith("`n")) { [void]$this.Output.Append("`n") }
+    }
     [void] puts() { [void]$this.Output.Append("`n") }
 
     [string] target_name() {
@@ -105,13 +110,13 @@ class ReviewBuilder {
     }
 
     [void] firstlinenum([string[]]$ArgList) {
-        $this.FirstLineNum = [int]$ArgList[0]
+        $this.FirstLineNumValue = [int]$ArgList[0]
     }
 
     [int] line_num() {
-        if ($null -eq $this.FirstLineNum) { return 1 }
-        $n = $this.FirstLineNum
-        $this.FirstLineNum = $null
+        if ($null -eq $this.FirstLineNumValue) { return 1 }
+        $n = $this.FirstLineNumValue
+        $this.FirstLineNumValue = $null
         return $n
     }
 
@@ -339,6 +344,173 @@ class ReviewBuilder {
     }
 
     [string] inline_pageref([string]$Id) { return "[link:$Id]" }
+
+    # --- headline / section / column references (builder.rb) ---------------------------
+
+    [string] inline_hd_chap([object]$Chap, [string]$Id) {
+        throw [System.NotImplementedException]::new('inline_hd_chap must be overridden')
+    }
+
+    [string] inline_hd([string]$Id) {
+        try {
+            $m = [regex]::Match($Id, '^([^|]+)\|(.+)')
+            $target = $null
+            if ($m.Success) {
+                foreach ($c in @($this.Book.Chapters()) + @($this.Book.Parts())) {
+                    if ($c.Id() -eq $m.Groups[1].Value) { $target = $c; break }
+                }
+            }
+            if ($target) { return $this.inline_hd_chap($target, $m.Groups[2].Value) }
+            return $this.inline_hd_chap($this.Chapter, $Id)
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown headline: $Id")
+        }
+    }
+
+    [string] inline_secref([string]$Id) { return $this.inline_hd($Id) }
+
+    [string] inline_sec([string]$Id) {
+        try {
+            $resolved = $this.extract_chapter_id($Id)
+            $n = $resolved[0].HeadlineIndex.NumberOf($resolved[1])
+            if ($n -and $null -ne $resolved[0].Number -and $this.over_secnolevel($n)) { return $n }
+            throw [ReviewApplicationError]::new("the target headline doesn't have a number: $Id")
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown headline: $Id")
+        }
+    }
+
+    [string] inline_sectitle([string]$Id) {
+        try {
+            $resolved = $this.extract_chapter_id($Id)
+            return $this.compile_inline([string]$resolved[0].GetHeadline($resolved[1]).Content())
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown headline: $Id")
+        }
+    }
+
+    [string] inline_column_chap([object]$Chap, [string]$Id) {
+        return [ReviewI18n]::T('column', [string]$Chap.GetColumn($Id).Content())
+    }
+
+    [string] inline_column([string]$Id) {
+        try {
+            $m = [regex]::Match($Id, '^([^|]+)\|(.+)')
+            $target = $null
+            if ($m.Success) {
+                foreach ($c in $this.Book.Chapters()) {
+                    if ($c.Id() -eq $m.Groups[1].Value) { $target = $c; break }
+                }
+            }
+            if ($target) { return $this.inline_column_chap($target, $m.Groups[2].Value) }
+            return $this.inline_column_chap($this.Chapter, $Id)
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown column: $Id")
+        }
+    }
+
+    [string] inline_include([string]$FileName) {
+        $path = Join-Path $this.Book.BaseDir $FileName
+        return $this.compile_inline((Get-Content -LiteralPath $path -Raw -Encoding utf8).TrimEnd("`r", "`n"))
+    }
+
+    # --- generic image / table / bibpaper dispatch (builder.rb) -------------------------
+
+    [void] image_image([string]$Id, [object]$Caption, [object]$Metric) {
+        throw [System.NotImplementedException]::new('image_image must be overridden')
+    }
+
+    [void] image_dummy([string]$Id, [object]$Caption, [string[]]$Lines) {
+        throw [System.NotImplementedException]::new('image_dummy must be overridden')
+    }
+
+    [void] image([string[]]$Lines, [string[]]$ArgList) {
+        $id = $ArgList[0]
+        $caption = if ($ArgList.Count -gt 1) { $ArgList[1] } else { $null }
+        $metric = if ($ArgList.Count -gt 2) { $ArgList[2] } else { $null }
+        if ($this.Chapter.ImageBound($id)) {
+            $this.image_image($id, $caption, $metric)
+        }
+        else {
+            if ($this.Strict) { Write-Warning "image not bound: $id" }
+            $this.image_dummy($id, $caption, $Lines)
+        }
+    }
+
+    hidden [regex] table_row_separator_regexp() {
+        $sep = [string]$this.Book.Config.Get('table_row_separator')
+        if ($sep -eq 'tabs') { return [regex]::new('\t+') }
+        if ($sep -eq 'singletab') { return [regex]::new('\t') }
+        if ($sep -eq 'spaces') { return [regex]::new('\s+') }
+        if ($sep -eq 'verticalbar') { return [regex]::new('\s*' + [regex]::Escape($this.escape('|')) + '\s*') }
+        throw [ReviewApplicationError]::new("Unknown value for 'table_row_separator', should be: tabs, singletab, spaces, verticalbar")
+    }
+
+    # Returns @($sepIdx, $rows) where $rows is a List[object] of string[] rows. Lines
+    # arrive already inline-compiled (escaped), which is why the separator check also
+    # accepts '{}' -- '-' has been escaped to '{-}' by then (mirrors Ruby exactly).
+    [object[]] parse_table_rows([string[]]$Lines) {
+        $sepIdx = $null
+        $rows = [System.Collections.Generic.List[object]]::new()
+        $sepRe = $this.table_row_separator_regexp()
+        for ($idx = 0; $idx -lt $Lines.Count; $idx++) {
+            $line = $Lines[$idx]
+            if ($line -match '^[=-]{12}' -or $line -match '^[={}-]{12}') {
+                if ($null -eq $sepIdx) { $sepIdx = $idx }
+                continue
+            }
+            # strip (both ends), as in Re:VIEW 5.9.0 -- later versions changed this to
+            # rstrip, which treats a leading separator as an empty first cell.
+            $trimmed = $line.Trim()
+            $cells = [System.Collections.Generic.List[string]]::new()
+            if ($trimmed.Length -gt 0) {
+                foreach ($cell in $sepRe.Split($trimmed)) { $cells.Add(($cell -replace '^\.', '')) }
+            }
+            $rows.Add($cells)
+        }
+        $this.adjust_n_cols($rows)
+        if ($rows.Count -eq 0) { throw [ReviewApplicationError]::new('no rows in the table') }
+
+        $finalRows = [System.Collections.Generic.List[object]]::new()
+        foreach ($r in $rows) { $finalRows.Add([string[]]$r.ToArray()) }
+        return @($sepIdx, $finalRows)
+    }
+
+    hidden [void] adjust_n_cols([System.Collections.Generic.List[object]]$Rows) {
+        $maxCols = 0
+        foreach ($cols in $Rows) {
+            while ($cols.Count -gt 0 -and $cols[$cols.Count - 1].Trim().Length -eq 0) {
+                $cols.RemoveAt($cols.Count - 1)
+            }
+            if ($cols.Count -gt $maxCols) { $maxCols = $cols.Count }
+        }
+        foreach ($cols in $Rows) {
+            while ($cols.Count -lt $maxCols) { $cols.Add('') }
+        }
+    }
+
+    [void] bibpaper_header([string]$Id, [object]$Caption) {
+        throw [System.NotImplementedException]::new('bibpaper_header must be overridden')
+    }
+
+    [void] bibpaper_bibpaper([string]$Id, [object]$Caption, [string[]]$Lines) {
+        throw [System.NotImplementedException]::new('bibpaper_bibpaper must be overridden')
+    }
+
+    [void] bibpaper([string[]]$Lines, [string[]]$ArgList) {
+        $id = $ArgList[0]
+        $caption = if ($ArgList.Count -gt 1) { $ArgList[1] } else { $null }
+        $this.bibpaper_header($id, $caption)
+        if (@($Lines).Count -gt 0) {
+            $this.puts()
+            $this.bibpaper_bibpaper($id, $caption, $Lines)
+        }
+        $this.puts()
+    }
     [string] inline_tcy([string]$Arg) { return "$Arg[rotate 90 degree]" }
     [string] inline_balloon([string]$Arg) { return "← $Arg" }
 
@@ -401,17 +573,17 @@ class ReviewBuilder {
         return $this.result_metric($results.ToArray())
     }
 
-    hidden [string] $TSize = $null
+    hidden [string] $TSizeValue = $null
 
     [void] tsize([string[]]$ArgList) {
         $str = $ArgList[0]
         $m = [regex]::Match($str, '^\|(.*?)\|(.*)')
         if ($m.Success) {
             $builders = $m.Groups[1].Value.Split(',') | ForEach-Object { $_ -replace '\s', '' }
-            if ($builders -contains $this.target_name()) { $this.TSize = $m.Groups[2].Value }
+            if ($builders -contains $this.target_name()) { $this.TSizeValue = $m.Groups[2].Value }
         }
         else {
-            $this.TSize = $str
+            $this.TSizeValue = $str
         }
     }
 

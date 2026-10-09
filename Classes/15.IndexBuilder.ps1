@@ -16,7 +16,7 @@ class ReviewIndexBuilder : ReviewBuilder {
     [ReviewIndepImageIndex] $IndepImageIndex
     [ReviewHeadlineIndex] $HeadlineIndex
     [ReviewColumnIndex] $ColumnIndex
-    [ReviewBibpaperIndex] $BBibpaperIndex
+    [ReviewBibpaperIndex] $BibpaperIndex
 
     hidden [System.Collections.Generic.List[string]] $HeadlineStack
     hidden [hashtable] $CrossrefFootnote
@@ -51,7 +51,7 @@ class ReviewIndexBuilder : ReviewBuilder {
         $this.EndnoteIndex = [ReviewEndnoteIndex]::new()
         $this.HeadlineIndex = [ReviewHeadlineIndex]::new($this.Chapter)
         $this.ColumnIndex = [ReviewColumnIndex]::new()
-        $this.BBibpaperIndex = [ReviewBibpaperIndex]::new()
+        $this.BibpaperIndex = [ReviewBibpaperIndex]::new()
 
         if ($this.Book) {
             $this.ImageIndex = [ReviewImageIndex]::new($this.Chapter)
@@ -132,8 +132,8 @@ class ReviewIndexBuilder : ReviewBuilder {
     [void] paragraph([string[]]$Lines) {}
     [string] parasep() { return '' }
     [string] nofunc_text([string]$Str) { return '' }
-    [void] read([string[]]$Lines, [string[]]$ArgList) {}
-    [void] lead([string[]]$Lines, [string[]]$ArgList) {}
+    [void] read([string[]]$Lines) {}
+    [void] lead([string[]]$Lines) {}
 
     [void] list([string[]]$Lines, [string[]]$ArgList) {
         $id = $ArgList[0]; $caption = $ArgList[1]
@@ -300,8 +300,8 @@ class ReviewIndexBuilder : ReviewBuilder {
     [void] bibpaper([string[]]$Lines, [string[]]$ArgList) {
         $id = $ArgList[0]; $caption = $ArgList[1]
         $this.check_id($id)
-        $item = [ReviewIndexItem]::new($id, $this.BBibpaperIndex.Size() + 1, $caption)
-        $this.BBibpaperIndex.AddItem($item)
+        $item = [ReviewIndexItem]::new($id, $this.BibpaperIndex.Size() + 1, $caption)
+        $this.BibpaperIndex.AddItem($item)
         [void]$this.compile_inline($caption)
         foreach ($line in $Lines) { [void]$this.compile_inline($line) }
     }

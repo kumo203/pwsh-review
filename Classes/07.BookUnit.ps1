@@ -108,6 +108,15 @@ class ReviewBookUnit {
         return $this.IndepImageIndex.Get($Id)
     }
 
+    # Mirrors BookUnit#bibpaper/#bibpaper_index: the bib index is book-wide (built from
+    # bib.re by ReviewBookBase.GenerateIndexes), not per-chapter.
+    [ReviewIndexItem] GetBibpaper([string]$Id) {
+        if (-not $this.Book.BibExist()) {
+            throw [ReviewFileNotFoundError]::new("no such bib file: $($this.Book.BibFile())")
+        }
+        return $this.Book.BibpaperIndex.Get($Id)
+    }
+
     # Mirrors BookUnit#image_bound? -- truthy iff the image's resolved file path exists
     # (ReviewImageFinder.FindPath returns $null, not a throw, when nothing matches).
     [bool] ImageBound([string]$Id) {

@@ -12,6 +12,11 @@ class ReviewI18n {
     static [string[]] $AlphaL = @('0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
     static [string[]] $RomanU = @('0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV', 'XXV', 'XXVI', 'XXVII')
     static [string[]] $RomanL = @('0', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'xix', 'xx', 'xxi', 'xxii', 'xxiii', 'xxiv', 'xxv', 'xxvi', 'xxvii')
+    static [string[]] $AlphaUW = @('０', 'Ａ', 'Ｂ', 'Ｃ', 'Ｄ', 'Ｅ', 'Ｆ', 'Ｇ', 'Ｈ', 'Ｉ', 'Ｊ', 'Ｋ', 'Ｌ', 'Ｍ', 'Ｎ', 'Ｏ', 'Ｐ', 'Ｑ', 'Ｒ', 'Ｓ', 'Ｔ', 'Ｕ', 'Ｖ', 'Ｗ', 'Ｘ', 'Ｙ', 'Ｚ')
+    static [string[]] $AlphaLW = @('０', 'ａ', 'ｂ', 'ｃ', 'ｄ', 'ｅ', 'ｆ', 'ｇ', 'ｈ', 'ｉ', 'ｊ', 'ｋ', 'ｌ', 'ｍ', 'ｎ', 'ｏ', 'ｐ', 'ｑ', 'ｒ', 'ｓ', 'ｔ', 'ｕ', 'ｖ', 'ｗ', 'ｘ', 'ｙ', 'ｚ')
+    static [string[]] $RomanUW = @('０', 'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ｖ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ｘ', 'Ⅺ', 'Ⅻ')
+    static [string[]] $ArabicUW = @('〇', '１', '２', '３', '４', '５', '６', '７', '８', '９', '１０', '１１', '１２', '１３', '１４', '１５', '１６', '１７', '１８', '１９', '２０', '２１', '２２', '２３', '２４', '２５', '２６', '２７')
+    static [string[]] $ArabicLW = @('〇', '１', '２', '３', '４', '５', '６', '７', '８', '９', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27')
     static [string[]] $Japan = @('〇', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七')
 
     static [ReviewI18n] $Instance = $null
@@ -118,7 +123,7 @@ class ReviewI18n {
         $frmt = [string]$raw
         $frmt = $frmt.Replace('%%', '##')
 
-        if ($FormatArgs -is [array]) {
+        if ($FormatArgs -is [System.Collections.IList]) {
             $argList = [System.Collections.Generic.List[object]]::new()
             $argList.AddRange([object[]]$FormatArgs)
         }
@@ -131,19 +136,26 @@ class ReviewI18n {
         }
 
         $percentTokenPattern = [regex]::new('%[A-Za-z]{1,3}')
-        $matches = $percentTokenPattern.Matches($frmt)
+        $tokenMatches = $percentTokenPattern.Matches($frmt)   # not $matches: that shadows the automatic $Matches
         $removeIdx = [System.Collections.Generic.List[int]]::new()
 
-        for ($idx = 0; $idx -lt $matches.Count; $idx++) {
-            $tok = $matches[$idx].Value
-            $table = $null
-            switch ($tok) {
-                '%pA' { $table = [ReviewI18n]::AlphaU }
-                '%pa' { $table = [ReviewI18n]::AlphaL }
-                '%pR' { $table = [ReviewI18n]::RomanU }
-                '%pr' { $table = [ReviewI18n]::RomanL }
-                '%pJ' { $table = [ReviewI18n]::Japan }
-                default { $table = $null }
+        for ($idx = 0; $idx -lt $tokenMatches.Count; $idx++) {
+            $tok = $tokenMatches[$idx].Value
+            # -CaseSensitive is essential: PowerShell's switch is case-INsensitive by
+            # default AND runs every matching clause, so '%pA' also matched the '%pa'
+            # clause (last one wins), rendering 付録A as 付録a and 第II部 as 第ii部.
+            $table = switch -CaseSensitive ($tok) {
+                '%pA' { [ReviewI18n]::AlphaU; break }
+                '%pa' { [ReviewI18n]::AlphaL; break }
+                '%pAW' { [ReviewI18n]::AlphaUW; break }
+                '%paW' { [ReviewI18n]::AlphaLW; break }
+                '%pR' { [ReviewI18n]::RomanU; break }
+                '%pr' { [ReviewI18n]::RomanL; break }
+                '%pRW' { [ReviewI18n]::RomanUW; break }
+                '%pJ' { [ReviewI18n]::Japan; break }
+                '%pdW' { [ReviewI18n]::ArabicLW; break }
+                '%pDW' { [ReviewI18n]::ArabicUW; break }
+                default { $null }
             }
             if ($null -ne $table -and $idx -lt $argList.Count) {
                 $n = [int]$argList[$idx]

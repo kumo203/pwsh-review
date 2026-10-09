@@ -1,0 +1,177 @@
+\chapter{章見出し}
+\label{chap:ch01}
+
+\begin{quotation}
+章にはリードが入ることがあります。図版や表が入ることはまずありませんが、\reviewbold{太字}くらいは使われることも。
+
+複数段落になる可能性もあります。
+\end{quotation}
+
+段落は普通に書き連ねていくだけです。段落間は空行を含めます。
+
+こんなかんじ
+
+です。空けない場合は、1つの
+段落として結合されます。TeXと違って文字種によって良い塩梅にスペースを入れてくれたりはしないので、特に英文の場合は注意が必要です。this is a
+pen.と「apen」になってしまいます。行頭行末のスペース文字も詰められてしまうので、
+this is a pen.は途中改行せずに記述しなければなりません。
+
+通常段落は「字下げ」することを想定して表現されますが、たとえばコードをまたぐ
+
+\begin{reviewlistblock}
+\begin{reviewemlist}
+'hello!' 'こんにちはWorld!'
+\end{reviewemlist}
+\end{reviewlistblock}
+
+\noindent
+ようにしたい場合は、またいだ後の段落前に「\reviewtt{//noindent}」を入れておくことで字下げを抑止できます（そもそもこういうまたぎ行為は筆者の好みではありませんが）。
+
+\section{節見出し}
+\label{sec:1-1}
+
+\reviewtt{=}の数で見出しレベルを表しますが、最大\reviewtt{=====}の5レベルまでの見出しがあり得ます（内部的にはレベル6まであるけれども非推奨で、一部のビルダでは動かない）。
+
+\begin{itemize}
+\item \reviewtt{=}：章および部
+\item \reviewtt{==}：節
+\item \reviewtt{===}：項
+\item \reviewtt{====}：段
+\item \reviewtt{=====}：レベル5見出し
+\end{itemize}
+
+「X.X.X」のように採番するか否かは\reviewtt{config.yml}の\reviewtt{secnolevel}パラメータで変動します\footnote{前述したように\reviewtt{PREDEF}、\reviewtt{POSTDEF}の場合は採番\reviewbold{しません}。}。デフォルトは2（X.Xまで）ですが、このリファレンスドキュメントでは一応4（X.X.X.X）まで採番を試みています。
+
+\subsection{項見出し……に脚注を入れると\reviewit{TeX}ではエラー}
+\label{sec:1-1-1}
+
+\footnote{本当は項の脚注}という脚注を見出し箇所に入れようとするとTeXではエラーになります。見出しにそういうものを入れるべきではない、といえばそれまでですが。見出しにはインラインでの装飾タグが入る可能性があります。
+
+\subsubsection{段見出し}
+\label{sec:1-1-1-1}
+
+ここまで採番することがあるケースがあるか、というとたまにあったりします。
+
+\paragraph*{レベル5見出し}
+\label{sec:1-1-1-1-1}
+
+さすがにこのあたりのレベルは採番はしないですね。紙面では、:によるdescription箇条書きでは大きくなりすぎるような規模の場合にこのレベルの見出しを代用することがあります。
+
+あくまでも見出しなので、見出しの行にそのまま段落が続いてしまう見た目は期待と違います。
+
+\section{長い節見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}
+\label{sec:1-2}
+
+\subsection{長い項見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}
+\label{sec:1-2-1}
+
+\subsubsection{長い段見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}
+\label{sec:1-2-1-1}
+
+\paragraph*{長いレベル5見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}
+\label{sec:1-2-1-1-1}
+
+また、nonumあるいはnotocを付けた見出しは、章であっても採番されません。前者nonumは採番なし・目次に含める、後者notocは採番なし・目次にも含めないという意味です。
+
+\subsection*{採番しない項見出し}
+\addcontentsline{toc}{subsection}{採番しない項見出し}
+
+\subsection{採番する項見出し}
+\label{sec:1-2-2}
+
+nodispを付けると、紙面には表示されず目次には含まれる見出しとなります（採番なし）。節以下のレベルで使うことはほとんどなく、たとえば「献辞」のように紙面には見出しを出したくないけれども目次には入れておきたい前付名などに使うことを想定しています。
+
+\addcontentsline{toc}{subsection}{nodispで隠れた見出し}
+
+\section{箇条書き}
+\label{sec:1-3}
+
+\subsection{ナカグロ箇条書き}
+\label{sec:1-3-1}
+
+ナカグロ箇条書き（HTMLの\reviewit{ul}、TeXの\reviewit{itemize}）は\reviewit{スペース}+\reviewtt{*}+\reviewit{スペース}で表現します。インラインタグが含まれることがあります。
+
+\begin{itemize}
+\item 箇条書き1
+\item 箇条書き2\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+\end{itemize}
+
+入れ子ナカグロ箇条書きもあります。
+
+\begin{itemize}
+\item 箇条書き1
+
+\begin{itemize}
+\item 箇条書き1{-}1
+\item 箇条書き1{-}2
+
+\begin{itemize}
+\item 箇条書き1{-}2{-}1
+\end{itemize}
+
+\end{itemize}
+
+\item 箇条書き2
+
+\begin{itemize}
+\item 箇条書き2{-}1
+\end{itemize}
+
+\end{itemize}
+
+箇条書きの間に別の要素（ぶらさがりの段落など）が入ることは標準では対応しておらず、どうしてもそういうのが必要な場合は途中でフックして変換後ソースを書き換えることになります。
+
+\subsection{番号箇条書き}
+\label{sec:1-3-2}
+
+番号箇条書き（HTMLの\reviewit{ol}、TeXの\reviewit{enumerate}）は\reviewit{スペース}+\reviewtt{数字.}+\reviewit{スペース}で表現します。
+
+\begin{enumerate}
+\item 箇条書き1
+\item 箇条書き2\reviewbold{太字bold}\reviewtt{等幅code}
+\end{enumerate}
+
+olnumで一応番号が変更可能なことを期待していますが、Webブラウザだとだめなことが多いかもしれません。
+
+\begin{enumerate}
+\setcounter{enumi}{9}
+\item 箇条書き10
+\item 箇条書き11
+\end{enumerate}
+
+\subsection{用語リスト}
+\label{sec:1-3-3}
+
+用語リスト（HTMLの\reviewit{dl}、TeXの\reviewit{description}）は\reviewit{スペース}+\reviewtt{:}+\reviewit{スペース}で見出しを、説明は行頭にタブかスペースを入れて表現します。
+
+\begin{description}
+\item[Alpha\reviewbold{bold太字}\reviewit{italicイタ}\reviewtt{等幅code}\protect\footnotemark{}] \mbox{} \\
+\reviewit{DEC}の作っていた\reviewbold{RISC CPU}。\reviewit{italicイタ}\reviewtt{等幅code}
+浮動小数点数演算が速い。
+\item[POWER] \mbox{} \\
+IBMとモトローラが共同製作したRISC CPU。\\
+派生としてPOWER PCがある。
+\item[SPARC] \mbox{} \\
+Sunが作っているRISC CPU。
+CPU数を増やすのが得意。
+\end{description}
+
+\footnotetext[3]{箇条書き見出しへの脚注。}
+
+\begin{reviewlistblock}
+\begin{reviewemlist}
+\reviewbold{bold太字}\reviewit{italicイタ}
+
+ : Alpha@\textless{}b\textgreater{}\{bold太字\}@\textless{}i\textgreater{}\{italicイタ\}@\textless{}tt\textgreater{}\{等幅code\}
+        @\textless{}i\textgreater{}\{DEC\}の作っていた@\textless{}b\textgreater{}\{RISC CPU\}。@\textless{}i\textgreater{}\{italicイタ\}@\textless{}tt\textgreater{}\{等幅code\}
+        浮動小数点数演算が速い。
+ : POWER
+        IBMとモトローラが共同製作したRISC CPU。@\textless{}br\textgreater{}\{\}
+        派生としてPOWER PCがある。
+ : SPARC
+        Sunが作っているRISC CPU。
+        CPU数を増やすのが得意。\reviewballoon{ふきだし説明}
+\end{reviewemlist}
+\end{reviewlistblock}
+
+説明文に複数の段落を入れることは構文上できないので、\reviewtt{@}\reviewtt{\textless{}br\textgreater{}\{\}}を入れて改行することで代替します。

@@ -47,8 +47,9 @@ class ReviewPdfMaker {
 
     [string] BuildPath() {
         if ($this.Config.Get('debug')) {
+            # In the project directory rather than Ruby's Dir.pwd -- see GeneratePdf
             $dirName = "$($this.Config.Get('bookname'))-pdf"
-            $fullPath = Join-Path (Get-Location).Path $dirName
+            $fullPath = Join-Path $this.BaseDir $dirName
             if (Test-Path -LiteralPath $fullPath) { Remove-Item -LiteralPath $fullPath -Recurse -Force }
             New-Item -ItemType Directory -Path $fullPath | Out-Null
             return $fullPath
@@ -78,8 +79,20 @@ class ReviewPdfMaker {
         if ($IgnoreErrors) { $cmdConfig['ignore-errors'] = $true }
         if ($OnlyFiles) { $this.BuildOnly = @($OnlyFiles | ForEach-Object { $_.Trim() -replace '\.re$', '' }) }
 
+        $this.LoadConfig($YamlFile, $cmdConfig)
+
         try {
-            $this.Config = [ReviewConfigure]::Create('pdfmaker', $YamlFile, $cmdConfig)
+            $this.GeneratePdf()
+        }
+        catch [ReviewApplicationError] {
+            if ($this.Debug) { throw }
+            throw [ReviewApplicationError]::new($_.Exception.Message)
+        }
+    }
+
+    hidden [void] LoadConfig([string]$YamlFile, [hashtable]$CmdConfig) {
+        try {
+            $this.Config = [ReviewConfigure]::Create('pdfmaker', $YamlFile, $CmdConfig)
         }
         catch [ReviewConfigError] {
             throw [ReviewApplicationError]::new($_.Exception.Message)
@@ -99,14 +112,41 @@ class ReviewPdfMaker {
         if (-not $this.Config.Get('texdocumentclass')) {
             $this.Config.Set('texdocumentclass', $this.Config.Get('_texdocumentclass'))
         }
+    }
 
-        try {
-            $this.GeneratePdf()
+    # Compiles every chapter plus the master __REVIEW_BOOK__.tex into $OutDir WITHOUT
+    # running the LaTeX toolchain (no Docker needed) -- backs ConvertTo-ReviewLatex, and
+    # makes golden-file comparison against the Ruby oracle possible in plain unit tests.
+    [void] ExecuteTexOnly([string]$YamlFile, [string]$OutDir, [bool]$IgnoreErrors) {
+        if (-not (Test-Path -LiteralPath $YamlFile -PathType Leaf)) {
+            throw [ReviewApplicationError]::new("$YamlFile not found.")
         }
-        catch [ReviewApplicationError] {
-            if ($this.Debug) { throw }
-            throw [ReviewApplicationError]::new($_.Exception.Message)
-        }
+        $cmdConfig = @{}
+        if ($IgnoreErrors) { $cmdConfig['ignore-errors'] = $true }
+        $this.LoadConfig($YamlFile, $cmdConfig)
+
+        New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
+        $this.Path = (Resolve-Path -LiteralPath $OutDir).ProviderPath
+        $this.CompileTexSources()
+        Set-Content -LiteralPath (Join-Path $this.Path "$($this.MasterTex).tex") -Value $this.TemplateContent() -NoNewline -Encoding utf8
+    }
+
+    hidden [void] CompileTexSources() {
+        $this.CompileErrors = $false
+
+        $book = [ReviewBookBase]::new($this.BaseDir, $this.Config)
+        $latexBuilder = [ReviewLATEXBuilder]::new()
+        $this.Converter = [ReviewConverter]::new($book, $latexBuilder)
+        $this.ErbConfig()
+
+        $this.InputFiles = $this.MakeInputFiles($book)
+
+        $this.CheckCompileStatus([bool]$this.Config.Get('ignore-errors'))
+
+        # for backward compatibility
+        $styPkg = ''
+        if ($this.Config.Get('texstyle')) { $styPkg = "\usepackage{$($this.Config.Get('texstyle'))}" }
+        $this.Config.Set('usepackage', $styPkg)
     }
 
     [hashtable] MakeInputFiles([object]$Book) {
@@ -166,29 +206,20 @@ class ReviewPdfMaker {
         $this.Path = $this.BuildPath()
 
         try {
-            $this.CompileErrors = $false
+            $this.CompileTexSources()
 
-            $book = [ReviewBookBase]::new($this.BaseDir, $this.Config)
-            $latexBuilder = [ReviewLATEXBuilder]::new()
-            $this.Converter = [ReviewConverter]::new($book, $latexBuilder)
-            $this.ErbConfig()
-
-            $this.InputFiles = $this.MakeInputFiles($book)
-
-            $this.CheckCompileStatus([bool]$this.Config.Get('ignore-errors'))
-
-            # for backward compatibility
-            $styPkg = ''
-            if ($this.Config.Get('texstyle')) { $styPkg = "\usepackage{$($this.Config.Get('texstyle'))}" }
-            $this.Config.Set('usepackage', $styPkg)
-
+            # Deviation: Ruby reads sty/ and loose *.tex from Dir.pwd, relying on the
+            # `cd project && review-pdfmaker config.yml` convention. This port takes an
+            # explicit -Path and may be invoked from anywhere, so it uses the project
+            # directory (the one containing config.yml) instead.
+            $styDir = Join-Path $this.BaseDir 'sty'
             $this.CopyImages([string]$this.Config.Get('imagedir'), (Join-Path $this.Path ([string]$this.Config.Get('imagedir'))))
-            $this.CopySty((Join-Path (Get-Location).Path 'sty'), $this.Path, 'sty')
-            $this.CopySty((Join-Path (Get-Location).Path 'sty'), $this.Path, 'fd')
-            $this.CopySty((Join-Path (Get-Location).Path 'sty'), $this.Path, 'cls')
-            $this.CopySty((Join-Path (Get-Location).Path 'sty'), $this.Path, 'erb')
-            $this.CopySty((Join-Path (Get-Location).Path 'sty'), $this.Path, 'tex')
-            $this.CopySty((Get-Location).Path, $this.Path, 'tex')
+            $this.CopySty($styDir, $this.Path, 'sty')
+            $this.CopySty($styDir, $this.Path, 'fd')
+            $this.CopySty($styDir, $this.Path, 'cls')
+            $this.CopySty($styDir, $this.Path, 'erb')
+            $this.CopySty($styDir, $this.Path, 'tex')
+            $this.CopySty($this.BaseDir, $this.Path, 'tex')
             $this.CopyBundledStyFiles()
 
             $this.BuildPdf()
@@ -254,7 +285,7 @@ class ReviewPdfMaker {
     }
 
     hidden [string] JoinWithSeparator([object]$Value, [string]$Sep) {
-        if ($Value -is [array]) { return ($Value -join $Sep) }
+        if ($Value -is [System.Collections.IList]) { return ($Value -join $Sep) }
         return [string]$Value
     }
 
@@ -308,7 +339,8 @@ class ReviewPdfMaker {
                     $editStr = if ($edit -eq 0) { [ReviewI18n]::T('first_edition') } else { [ReviewI18n]::T('nth_edition', [string]($edit + 1)) }
                     $revStr = [ReviewI18n]::T('nth_impression', [string]($rev + 1))
                     if ($item -match '^\d+-\d+-\d+$') {
-                        $buf.Add([ReviewI18n]::T('published_by1', @($this.DateToS($item), $editStr + $revStr)))
+                        # parenthesized: in @($a, $b + $c) the comma binds tighter than +, giving @($a, $b) + $c
+                        $buf.Add([ReviewI18n]::T('published_by1', @($this.DateToS($item), ($editStr + $revStr))))
                     }
                     elseif ($item -match '^(\d+-\d+-\d+)[\s　](.+)') {
                         $buf.Add([ReviewI18n]::T('published_by3', @($this.DateToS($Matches[1]), $Matches[2])))
@@ -384,21 +416,51 @@ class ReviewPdfMaker {
         }
     }
 
+    # The variables Ruby's ERB templates see via `binding` inside PDFMaker (its instance
+    # variables plus the latex_config helper), for project-local .erb overrides rendered
+    # by the restricted ReviewErbLiteTemplate interpreter.
+    hidden [hashtable] ErbBinding() {
+        $self = $this   # NOT $this inside the scriptblock below -- see 13.Compiler.ps1
+        $binding = [hashtable]::new([System.StringComparer]::Ordinal)
+        $binding['@config'] = $this.Config
+        $binding['@texcompiler'] = $this.TexCompiler
+        $binding['@documentclass'] = $this.DocumentClass
+        $binding['@documentclassoption'] = $this.DocumentClassOption
+        $binding['@authors'] = $this.Authors
+        $binding['@okuduke'] = $this.Okuduke
+        $binding['@custom_originaltitlepage'] = $this.CustomOriginalTitlePage
+        $binding['@custom_creditpage'] = $this.CustomCreditPage
+        $binding['@custom_profilepage'] = $this.CustomProfilePage
+        $binding['@custom_advfilepage'] = $this.CustomAdvFilePage
+        $binding['@custom_backcoverpage'] = $this.CustomBackCoverPage
+        $binding['@custom_colophonpage'] = $this.CustomColophonPage
+        $binding['@coverimageoption'] = $this.CoverImageOption
+        $binding['@locale_latex'] = $this.LocaleLatex
+        $binding['@boxsetting'] = $this.BoxSetting
+        $binding['@input_files'] = $this.InputFiles
+        $binding['latex_config'] = { $self.LatexConfig() }.GetNewClosure()
+        $binding['__basedir'] = $this.BaseDir
+        return $binding
+    }
+
+    hidden [string] RenderProjectErb([string]$Path) {
+        $src = Get-Content -LiteralPath $Path -Raw -Encoding utf8
+        $tpl = [ReviewErbLiteTemplate]::new($src, $Path)
+        return $tpl.Render($this.ErbBinding(), $this.Escaper)
+    }
+
     [string] LatexConfig() {
         $result = New-ReviewLatexConfigBlock -Maker $this
         $localConfigFile = Join-Path $this.BaseDir 'layouts\config-local.tex.erb'
         if (Test-Path -LiteralPath $localConfigFile -PathType Leaf) {
-            throw [ReviewApplicationError]::new("project-local layouts/config-local.tex.erb is not yet supported by this port (ERB-subset interpreter not implemented -- planned for a later milestone).")
+            $result += "%% BEGIN: config-local.tex.erb`n"
+            $result += $this.RenderProjectErb($localConfigFile)
+            $result += "%% END: config-local.tex.erb`n"
         }
         return $result
     }
 
     [string] TemplateContent() {
-        $layoutFile = Join-Path $this.BaseDir 'layouts\layout.tex.erb'
-        if (Test-Path -LiteralPath $layoutFile -PathType Leaf) {
-            throw [ReviewApplicationError]::new("project-local layouts/layout.tex.erb is not yet supported by this port (ERB-subset interpreter not implemented -- planned for a later milestone).")
-        }
-
         $coverFile = $this.Config.Get('cover')
         if ($coverFile -and -not (Test-Path -LiteralPath (Join-Path $this.BaseDir $coverFile))) {
             throw [ReviewApplicationError]::new("File $coverFile is not found.")
@@ -406,6 +468,11 @@ class ReviewPdfMaker {
         $titleFile = $this.Config.Get('titlefile')
         if ($this.Config.Get('titlepage') -and $titleFile -and -not (Test-Path -LiteralPath (Join-Path $this.BaseDir $titleFile))) {
             throw [ReviewApplicationError]::new("File $titleFile is not found.")
+        }
+
+        $layoutFile = Join-Path $this.BaseDir 'layouts\layout.tex.erb'
+        if (Test-Path -LiteralPath $layoutFile -PathType Leaf) {
+            return $this.RenderProjectErb($layoutFile)
         }
 
         $configBlock = $this.LatexConfig()
@@ -419,7 +486,11 @@ class ReviewPdfMaker {
         foreach ($f in $files) {
             New-Item -ItemType Directory -Path $CopyBase -Force | Out-Null
             if ($ExtName -eq 'erb') {
-                throw [ReviewApplicationError]::new("project sty/*.erb files are not yet supported by this port (ERB-subset interpreter not implemented).")
+                # Deliberate fix, not a port: Ruby 5.9.0 calls an erb_content method here
+                # that is never defined anywhere (NameError if a project ever has a
+                # sty/*.erb). This renders it with the same binding as the layouts.
+                $target = Join-Path $CopyBase ($f.Name -replace '\.erb$', '')
+                Set-Content -LiteralPath $target -Value $this.RenderProjectErb($f.FullName) -NoNewline -Encoding utf8
             }
             else {
                 Copy-Item -LiteralPath $f.FullName -Destination $CopyBase -Force
@@ -465,13 +536,25 @@ class ReviewPdfMaker {
             $makeindexSty = $pdfCfg['makeindex_sty']
             $makeindexDic = $pdfCfg['makeindex_dic']
 
+            # Deviation from Ruby (which passes an absolute path, e.g. /work/syntax.dic):
+            # only the BUILD directory is mounted into the Docker container, so a host
+            # path to the project's style/dictionary file doesn't exist in there. Copy it
+            # into the build dir and pass a container-relative name instead.
             if ($makeindexSty) {
                 $styFull = Join-Path $this.BaseDir $makeindexSty
-                if (Test-Path -LiteralPath $styFull) { $makeindexOptions.Add('-s'); $makeindexOptions.Add($styFull) }
+                if (Test-Path -LiteralPath $styFull) {
+                    $styName = '__review_makeindex' + [System.IO.Path]::GetExtension($styFull)
+                    Copy-Item -LiteralPath $styFull -Destination (Join-Path $this.Path $styName) -Force
+                    $makeindexOptions.Add('-s'); $makeindexOptions.Add($styName)
+                }
             }
             if ($makeindexDic) {
                 $dicFull = Join-Path $this.BaseDir $makeindexDic
-                if (Test-Path -LiteralPath $dicFull) { $makeindexOptions.Add('-d'); $makeindexOptions.Add($dicFull) }
+                if (Test-Path -LiteralPath $dicFull) {
+                    $dicName = '__review_makeindex_dic' + [System.IO.Path]::GetExtension($dicFull)
+                    Copy-Item -LiteralPath $dicFull -Destination (Join-Path $this.Path $dicName) -Force
+                    $makeindexOptions.Add('-d'); $makeindexOptions.Add($dicName)
+                }
             }
 
             $runner = [ReviewProcessRunner]::new($this.Path, $this.DockerImage)

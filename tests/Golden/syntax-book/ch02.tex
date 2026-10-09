@@ -1,0 +1,465 @@
+\chapter{長い章見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}
+\label{chap:ch02}
+
+\section{ブロック命令}
+\label{sec:2-1}
+
+\subsection{ソースコード}
+\label{sec:2-1-1}
+
+採番付きリストの場合はlistです（\reviewlistref{2.1}）。
+
+\begin{reviewlistblock}
+\reviewlistcaption{リスト2.1: \reviewbold{Ruby}の\reviewtt{hello}コード\protect\footnotemark{}}
+\begin{reviewlist}
+puts 'Hello, World!'
+\end{reviewlist}
+\end{reviewlistblock}
+
+\footnotetext[1]{コードハイライトは外部パッケージに委任しています。TeXではjlisting、HTMLではRouge？}
+
+行番号と採番付きのリストはlistnumです。
+
+\begin{reviewlistblock}
+\reviewlistcaption{リスト2.2: 行番号はリテラルな文字で特に加工はしていない}
+\begin{reviewlist}
+ 1: class Hello
+ 2:   def initialize
+ 3:     @msg = 'Hello, World!'
+ 4:   end
+ 5: end
+\end{reviewlist}
+\end{reviewlistblock}
+
+採番なしはemlistを使います。キャプションはあったりなかったりします。
+
+\begin{reviewlistblock}
+\begin{reviewemlist}
+printf("hello");
+\end{reviewemlist}
+\end{reviewlistblock}
+
+\begin{reviewlistblock}
+\reviewemlistcaption{Python記法}
+\begin{reviewemlist}
+print('hello');
+\end{reviewemlist}
+\end{reviewlistblock}
+
+行番号付きのパターンとしてemlistnumがあります。
+
+\begin{reviewlistblock}
+\begin{reviewemlist}
+ 1: printf("hello");
+\end{reviewemlist}
+\end{reviewlistblock}
+
+\begin{reviewlistblock}
+\reviewemlistcaption{Python記法}
+\begin{reviewemlist}
+101: print('hello');
+\end{reviewemlist}
+\end{reviewlistblock}
+
+ソースコード引用を主ターゲットにするのには一応sourceというのを用意しています\footnote{書籍だと、いろいろ使い分けが必要なんですよ……（4、5パターンくらい使うことも）。普通の用途ではlistとemlistで十分だと思いますし、見た目も同じでよいのではないかと。TeXの抽象タグ名は変えてはいます。}。
+
+\begin{reviewlistblock}
+\reviewsourcecaption{hello.rb}
+\begin{reviewsource}
+puts 'Hello'
+\end{reviewsource}
+\end{reviewlistblock}
+
+\begin{reviewlistblock}
+\begin{reviewsource}
+puts 'Hello'
+\end{reviewsource}
+\end{reviewlistblock}
+
+実行例を示すとき用にはcmdを用意しています。いずれにせよ、商業書籍レベルでは必要なので用意しているものの、原稿レベルで書き手が使うコードブロックはほどほどの数に留めておいたほうがいいのではないかと思います。TeX版の紙面ではデフォルトは黒アミ。印刷によってはベタ黒塗りはちょっと怖いかもなので、あまり長々したものには使わないほうがいいですね。
+
+\begin{reviewlistblock}
+\begin{reviewcmd}
+\textdollar{} \reviewbold{ls /}
+\end{reviewcmd}
+\end{reviewlistblock}
+
+\subsection{図}
+\label{sec:2-1-2}
+
+採番・キャプション付きの図の貼り付けはimageを使用します（\reviewimageref{2.1}{image:ch02:ball}）。図版ファイルは識別子とビルダが対応しているフォーマットから先着順に探索されます。詳細については\href{https://github.com/kmuto/review/wiki/ImagePath}{ImagePath}のドキュメントを参照してください。
+
+\begin{reviewimage}%%ball
+\reviewincludegraphics[width=\maxwidth]{images/ball.png}
+\reviewimagecaption{ボール\protect\footnotemark{}}
+\label{image:ch02:ball}
+\end{reviewimage}
+\footnotetext[3]{GIMPのフィルタで作成。\\
+footnote内改行}
+\noindent
+（いちおう、\reviewtt{config.yml}ファイルに\reviewtt{footnotetext: true}を追加すれば、footnotemark/footnotetextを使うモードになりますが）
+
+採番なし、あるいはキャプションもなしのものはindepimageを使います。
+
+\begin{reviewimage}%%logic
+\reviewincludegraphics[width=\maxwidth]{images/logic.png}
+\end{reviewimage}
+\begin{reviewimage}%%logic2
+\reviewincludegraphics[width=\maxwidth]{images/logic2.png}
+\reviewindepimagecaption{図: 採番なしキャプション}
+\end{reviewimage}
+
+\subsection{表}
+\label{sec:2-1-3}
+
+表はtableを使います。\reviewtableref{2.1}{table:ch02:tab2-1}
+
+\begin{table}%%tab2-1
+\reviewtablecaption{表の\reviewbold{例}\protect\footnotemark{}}
+\label{table:ch02:tab2-1}
+\begin{reviewtable}{|l|l|l|}
+\hline
+\reviewth{A} & \reviewth{B} & \reviewth{C} \\  \hline
+D & E\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code} & \shortstack[l]{F\\
+G} \\  \hline
+H & I\protect\footnotemark{} & 長いセルの折り返し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□ \\  \hline
+\end{reviewtable}
+\end{table}
+
+\footnotetext[4]{現状、表のalignmentとかjoinとかはRe:VIEW記法では対応していません。筆者自身の制作では\url{https://kmuto.jp/d/?date=20120208\#p01}みたいな手法を使っています。}
+\footnotetext[5]{表内の脚注っていろいろ難しいです。}
+
+TeX向けにはtsizeでTeX形式の列指定自体は可能です。以下は\reviewcode{//tsize[\textbar{}latex\textbar{}p\{10mm\}p\{18mm\}\textbar{}p\{50mm\}]}としています。
+
+\begin{reviewtable}{p{10mm}p{18mm}|p{50mm}}
+\hline
+\reviewth{A} & \reviewth{B} & \reviewth{C} \\  \hline
+D & E\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code} & F\newline{}G \\  \hline
+H & I & 長いセルの折り返し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□ \\  \hline
+\end{reviewtable}
+
+TeXの普通のクラスファイルだと、列指定はl,c,r,p（幅指定+左均等）しかないのですが、Re:VIEWのスタイルファイルでL（幅指定+左寄せ，均等なし）、C（幅指定+中寄せ）、R（幅指定+右寄せ）を指定可能です。
+
+あとは縦に長い表がTeXだとそのままはみ出してしまうのでlongtableがあるけれどもそれはまた問題がいろいろあり……。
+
+採番はしたくないけれどもキャプションは指定したいという場合はemtableがあります。
+
+\begin{table}%%
+\reviewtablecaption*{キャプションを指定したいが採番はしたくない表}
+\begin{reviewtable}{|l|l|}
+\hline
+\reviewth{A} & B \\  \hline
+\reviewth{C} & D \\  \hline
+\end{reviewtable}
+\end{table}
+
+画像にしておいて貼り付けたほうがよさそうな場合はimgtableを使います（\reviewtableref{2.2}{table:ch02:table}）。
+
+\begin{table}[h]%%table
+\reviewimgtablecaption{ポンチ表}
+\label{table:ch02:table}
+\begin{reviewimage}%%table
+\reviewincludegraphics[width=\maxwidth]{images/table.jpg}
+\end{reviewimage}
+\end{table}
+
+\subsection{囲み記事}
+\label{sec:2-1-4}
+
+//\{〜//\}の囲み記事の中には段落のみしか入らないものと想定します（箇条書きなどを入れたい場合はユーザーの責任で適宜、変換後ソースを加工してもらうことを前提とします）。
+
+引用はquoteで表現します。上下アキ、左インデント（2文字くらい？）が入るのが一般的でしょうか。
+
+\begin{quote}
+ここに引用文。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+2行目の引用文。
+\end{quote}
+
+中寄せはcenteringです。
+
+\begin{flushright}
+中寄せ本文。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+2行目の中寄せ本文。
+\end{flushright}
+
+右寄せはflushrightです。
+
+\begin{flushright}
+右寄せ本文。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+2行目の右寄せ本文。
+\end{flushright}
+
+ノートnote。以降、キャプションあり/なしのパターンがあります。表現については結局紙面デザインに応じて千差万別になるものだと思いますので、基本デザインとしては何か囲み要素だとわかって、カスタマイズしやすければよい、という程度です。
+
+\begin{reviewnote}[ノートの例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+ノート1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+ノート2。
+
+\end{reviewnote}
+\begin{reviewnote}
+
+ノート。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewnote}
+
+メモmemo。
+
+\begin{reviewmemo}[メモの例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+メモ1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+メモ2。
+
+\end{reviewmemo}
+\begin{reviewmemo}
+
+メモ。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewmemo}
+
+Tips tip。
+
+\begin{reviewtip}[Tipsの例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+Tips1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+Tips2。
+
+\end{reviewtip}
+\begin{reviewtip}
+
+Tips。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewtip}
+
+情報 info。
+
+\begin{reviewinfo}[情報の例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+情報1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+情報2。
+
+\end{reviewinfo}
+\begin{reviewinfo}
+
+情報。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewinfo}
+
+注意 warning。
+
+\begin{reviewwarning}[注意の例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+注意1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+注意2。
+
+\end{reviewwarning}
+\begin{reviewwarning}
+
+注意。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewwarning}
+
+重要 important。
+
+\begin{reviewimportant}[重要の例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+重要1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+重要2。
+
+\end{reviewimportant}
+\begin{reviewimportant}
+
+重要。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewimportant}
+
+警告 caution。
+
+\begin{reviewcaution}[警告の例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+警告1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+警告2。
+
+\end{reviewcaution}
+\begin{reviewcaution}
+
+警告。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewcaution}
+
+注意 notice。
+
+\begin{reviewnotice}[注意の例\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}]
+
+注意1。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+注意2。
+
+\end{reviewnotice}
+\begin{reviewnotice}
+
+注意。\reviewbold{太字bold}\reviewit{italicイタ}\reviewtt{等幅code}
+
+\end{reviewnotice}
+
+脚注が入ることもあり得ます。
+
+\begin{reviewnotice}[脚注がある注意\protect\footnotemark{}]
+
+こちらにも脚注\footnote{noticeの文章側脚注です。}
+
+\end{reviewnotice}
+\footnotetext[6]{noticeの見出し側脚注です。}
+
+\section{後注}
+\label{sec:2-2}
+
+後注は脚注と同様の書式で、\reviewtt{//endnote}で内容\endnote{後注その1です。}、\reviewtt{@}\reviewtt{\textless{}endnote\textgreater{}}で参照します\endnote{後注その2です。}。後注は\reviewtt{//printendnotes}を書いた箇所にまとめて書き出されます。ここではファイル末尾に置いています。
+
+\section{LaTeX式}
+\label{sec:2-3}
+
+LaTeX式はTeX紙面以外は保証されません。EPUBではMathML（\reviewtt{math\textunderscore{}format: mathml}）を使えますが、表現や互換性が不足しており、LaTeXをバックエンドとして画像化する\reviewtt{math\textunderscore{}format: imgmath}のほうがよさそうです。
+
+\begin{equation*}
+\sum_{i=1}^nf_n(x)
+\end{equation*}
+
+\begin{reviewequationblock}
+\reviewequationcaption{式2.1: 質量とエネルギーの等価性}
+\begin{equation*}
+E=mc^2
+\end{equation*}
+\end{reviewequationblock}
+
+\begin{equation*}
+A = \left(
+\begin{array}{ccc}
+a_{11} & \cdots & a_{1n} \\
+\vdots & \ddots & \vdots \\
+a_{m1} & \cdots & a_{mn}
+\end{array}
+\right)
+\end{equation*}
+
+式採番がほしいケースは多々発生しているので、標準の文法を拡張する必要があるように思っています（\reviewequationref{2.1}）。
+
+段落中の式は$E=mc^2$というシンプルなものならまだよいのですが、$\sinh^{-1} x = \log(x + \sqrt{x^2 + 1}$のような形だと\}のエスケープで読みにくめです。今のところRubyにあるようなフェンス文法を実装するのも難しいですね。$\sum_{i=1}^n$ $\displaystyle\sum_{i=1}^n$
+
+\section{インライン命令}
+\label{sec:2-4}
+\label{inlineop}
+
+\subsection{書体}
+\label{sec:2-4-1}
+
+本文での……キーワード\reviewkw{キーワード}（keyword）\footnote{キーワードのカッコは太字にしないほうがいいのかなと思いつつあります（手元の案件では太字にしないよう挙動を変えてしまっているほうが多い）。}、太字\reviewbold{b太字}、イタリック\reviewit{iイタリック}、等幅\reviewtt{tt等幅}、強調\reviewstrong{strong強調}、強調\reviewem{em強調}、下線\reviewunderline{u下線}、等幅\reviewcode{code等幅}、等幅太字\reviewttb{ttb等幅太字}、等幅イタリック\reviewtti{tti等幅イタリック}、網カケ\reviewami{amiアミ}、挿入\reviewinsert{ins挿入}、削除\reviewstrike{del削除}、16進UTF文字指定あ、インラインアイコン\reviewicon{images/inlineicon.jpg}
+
+傍点@\textless{}bou\textgreater{}\{bou傍点\}、ルビ@\textless{}ruby\textgreater{}\{愕然, がくぜん\}、縦中横@\textless{}tcy\textgreater{}\{90\}、はTeXでは現状、別パッケージが必要です。
+
+\begin{itemize}
+\item kw, b, strong, emは同じ書体でよいでしょう。
+\item tt、codeは同じ書体でよいでしょう。
+\item amiはコードブロックの中で使うことを想定しています。
+\end{itemize}
+
+\begin{itemize}
+\item 箇条書き内での……キーワード\reviewkw{キーワード}（keyword）、太字\reviewbold{b太字}、イタリック\reviewit{iイタリック}、等幅\reviewtt{tt等幅}、強調\reviewstrong{strong強調}、強調\reviewem{em強調}、下線\reviewunderline{u下線}、等幅\reviewcode{code等幅}、等幅太字\reviewttb{ttb等幅太字}、等幅イタリック\reviewtti{tti等幅イタリック}、網カケ\reviewami{amiアミ}、挿入\reviewinsert{ins挿入}、削除\reviewstrike{del削除}、16進UTF文字指定あ、インラインアイコン\reviewicon{images/inlineicon.jpg}
+\end{itemize}
+
+\begin{reviewtable}{p{120mm}}
+\hline
+\reviewth{表内での……キーワード\reviewkw{キーワード}（keyword）、太字\reviewbold{b太字}、イタリック\reviewit{iイタリック}、等幅\reviewtt{tt等幅}、強調\reviewstrong{strong強調}、強調\reviewem{em強調}、下線\reviewunderline{u下線}、等幅\reviewcode{code等幅}、等幅太字\reviewttb{ttb等幅太字}、等幅イタリック\reviewtti{tti等幅イタリック}、網カケ\reviewami{amiアミ}、挿入\reviewinsert{ins挿入}、削除\reviewstrike{del削除}、16進UTF文字指定あ、インラインアイコン\reviewicon{images/inlineicon.jpg}} \\  \hline
+\end{reviewtable}
+
+コードブロック内では対応装飾は減らしてよいと考えます。代わりにballoonが追加されます。
+
+\begin{reviewlistblock}
+\reviewemlistcaption{キャプション内での……キーワード\reviewkw{キーワード}（keyword）、太字\reviewbold{b太字}、イタリック\reviewit{iイタリック}、等幅\reviewtt{tt等幅}、強調\reviewstrong{strong強調}、強調\reviewem{em強調}、下線\reviewunderline{u下線}、等幅\reviewcode{code等幅}、等幅太字\reviewttb{ttb等幅太字}、等幅イタリック\reviewtti{tti等幅イタリック}、網カケ\reviewami{amiアミ}、挿入\reviewinsert{ins挿入}、削除\reviewstrike{del削除}、16進UTF文字指定あ、インラインアイコン\reviewicon{images/inlineicon.jpg}}
+\begin{reviewemlist}
+コードブロック内での……
+太字\reviewbold{b太字}
+イタリック\reviewit{iイタリック}
+下線\reviewunderline{u下線}
+網カケ\reviewami{amiアミ}    \reviewballoon{ふきだし説明}
+挿入\reviewinsert{ins挿入}、削除\reviewstrike{del削除}
+\end{reviewemlist}
+\end{reviewlistblock}
+
+\subsection{見出し内 \reviewbold{BOLD},\reviewit{ITALIC},\reviewtt{TT},\reviewstrong{STRONG},\reviewem{EM},\reviewcode{CODE},\reviewttb{TTB},\reviewtti{TTI},\reviewami{AMI},\reviewbou{BOU},\reviewkw{KW},\reviewunderline{UNDERLINE},\reviewinsert{INS}、\reviewstrike{DEL}}
+\label{sec:2-4-2}
+
+\subsection{参照}
+\label{sec:2-4-3}
+\label{crossref}
+
+\begin{itemize}
+\item 章番号：\reviewchapref{第1章}{chap:ch01}、\reviewchapref{付録A}{chap:appA}、\reviewchapref{第II部}{chap:part2}、\reviewchapref{}{chap:bib}
+\item 章題：\reviewchapref{章見出し}{chap:ch01}、\reviewchapref{部見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□}{chap:part2}、\reviewchapref{付録の見出し}{chap:appA}、\reviewchapref{参考文献}{chap:bib}
+\item 章番号+題：\reviewchapref{第2章「長い章見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□」}{chap:ch02}、\reviewchapref{第II部「部見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□」}{chap:part2}、\reviewchapref{付録A「付録の見出し」}{chap:appA}、\reviewchapref{「参考文献」}{chap:bib}
+\end{itemize}
+
+節や項への参照はhdまたはsecを使います。
+
+\begin{itemize}
+\item \reviewsecref{「2.1 ブロック命令」}{sec:2-1}の\reviewsecref{「2.1.2 図」}{sec:2-1-2}
+\item \reviewsecref{「2.4.3 参照」}{sec:2-4-3}
+\item \reviewsecref{「2.1 ブロック命令」}{sec:2-1}の\reviewsecref{「2.1.2 図」}{sec:2-1-2}
+\item \reviewsecref{「2.4.3 参照」}{sec:2-4-3}
+\item \reviewsecref{2.1}{sec:2-1}の\reviewsecref{2.1.2}{sec:2-1-2}
+\item \reviewsecref{2.4.3}{sec:2-4-3}
+\item \reviewsecref{ブロック命令}{sec:2-1}の\reviewsecref{図}{sec:2-1-2}
+\item \reviewsecref{参照}{sec:2-4-3}
+\item コラム参照 \reviewcolumnref{コラム「コラムその2」}{column:ch03:2}
+\end{itemize}
+
+他章への図表リスト参照の例です（\reviewlistref{1}、\reviewimageref{1}{image:pre01:fractal}、\reviewtableref{1}{table:pre01:tbl1}、\reviewlistref{A.1}、\reviewimageref{A.1}{image:appA:puzzle}、\reviewtableref{A.1}{table:appA:taba-1}）。
+
+なお、この「.」区切りなどのフォーマットは\reviewtt{i18n.yml}あるいは\reviewtt{locale.yml}でカスタマイズされ得る（format\textunderscore{}number、format\textunderscore{}number\textunderscore{}header、format\textunderscore{}number\textunderscore{}without\textunderscore{}chapter、format\textunderscore{}number\textunderscore{}header\textunderscore{}without\textunderscore{}chapter）ので、スタイルで固定化するのは避けるべきです。
+
+labelで定義したラベルへの参照の例です。EPUBだと\ref{#inlineop} TeXだと@\textless{}href\textgreater{}\{inlineop\} 。互換性がないのは気味が悪いですね。
+
+説明箇条書きはTeXで特殊な扱いをしているため、参照の確認を以下でしておきます。
+
+\begin{description}
+\item[\reviewchapref{第1章}{chap:ch01}] \mbox{} \\
+章番号
+\item[\reviewchapref{章見出し}{chap:ch01}] \mbox{} \\
+章題
+\item[\reviewchapref{第1章「章見出し」}{chap:ch01}] \mbox{} \\
+章番号+題
+\item[\reviewsecref{「2.4.3 参照」}{sec:2-4-3}] \mbox{} \\
+節
+\item[\reviewcolumnref{コラム「コラムその2」}{column:ch03:2}] \mbox{} \\
+コラム参照
+\end{description}
+
+URLは@\textless{}href\textgreater{}を使います。\url{https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\footnote{脚注に長いURLを入れてみます。\url{https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}}
+
+\subsection{参考文献}
+\label{sec:2-4-4}
+
+参考文献\reviewtt{bib.re}ファイルへの文献参照は、\reviewbibref{[1]}{bib:lins}とします。
+
+\subsection{索引}
+\label{sec:2-4-5}
+
+\index{さくいん@索引}\index{index}索引はTeXとIDGXML以外では妥当な動作を定義していません。idx\index{さくいん@索引!idx}は文中にも表示し、hidx\index{さくいん@索引!hidx}は文中からは隠した形の索引にします。読みはMecab\index{Mecab}があればそちらを使いますが、辞書ファイル\index{じしょふぁいる@辞書ファイル}を直接定義することもできます。\index{"!<>""$&()~=｜,./\｛｝?_[]*:;+%#()'`^@"!\textless{}\textgreater{}""\textdollar{}\&()\textasciitilde{}=\textbar{},./\reviewbackslash{}\reviewleftcurlybrace{}\reviewrightcurlybrace{}?\textunderscore{}[]*:;+\%\#()'`\textasciicircum{}}
+\index{｜@\textbar{}}\index{｛@\reviewleftcurlybrace{}}\index{｝@\reviewrightcurlybrace{}}
+
+idx, hidxいずれも=見出しの中には入れないようにし、後続の段落先頭にhidxで入れるように注意します（入れてしまうと目次などがおかしくなります）。
+
+\subsubsection{後注}
+\label{sec:2-4-5-1}
+
+\theendnotes

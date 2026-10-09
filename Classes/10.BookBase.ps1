@@ -152,13 +152,14 @@ class ReviewBookBase {
 
     [void] GenerateIndexes() {
         if ($this.BibExist()) {
-            # Bib (bibliography) support is deferred -- see plan non-goals; bibpaper_index
-            # stays empty rather than being populated from bib.re for v1.
-            $this.BibpaperIndex = [ReviewBibpaperIndex]::new()
+            $bibContent = Get-Content -LiteralPath (Join-Path $this.ContentDir() $this.BibFile()) -Raw -Encoding utf8
+            $bib = [ReviewBib]::new($this, $bibContent)
+            $bib.GenerateIndexes($true)
+            $this.BibpaperIndex = $bib.Book.BibpaperIndex
         }
         # Ruby: self.each_chapter(&:generate_indexes) calls with no args (use_bib
-        # defaults false) -- book-level bib indexing above is handled by a separate Bib
-        # object (deferred/stubbed, see plan non-goals), not by each chapter's own pass.
+        # defaults false) -- book-level bib indexing above is handled by the separate
+        # Bib object, not by each chapter's own pass.
         foreach ($chap in $this.Chapters()) { $chap.GenerateIndexes($false) }
         foreach ($part in $this.Parts()) { $part.GenerateIndexes($false) }
         $this.ChapterIndexCache = $this.CreateChapterIndex()
