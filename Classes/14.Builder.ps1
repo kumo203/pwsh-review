@@ -4,15 +4,13 @@
 # 13.Compiler.ps1's header comment.
 #
 # Scope note: Ruby's Builder defines generic wrappers for `list`/`listnum`/`source`
-# (delegating to list_header/list_body/etc., which raise NoMethodError if a subclass
-# doesn't override them) and for `image`/`table`/`bibpaper`/`graph` (delegating to
-# image_image/table_header/etc.). This port's v1 LATEXBuilder subset (M2) only overrides
-# list/listnum/source/emlist directly with LaTeX-specific bodies, not through this
-# generic indirection, and does not yet implement image/table/bibpaper/graph at all (on
-# either this base class or LATEXBuilder) -- deferred to M5. Since Compiler's dispatch
-# gates on "does the builder have a method with this name" (Test-ReviewBuilderMethod),
-# simply not defining these methods here produces the same graceful "builder does not
-# support command" compile error Ruby would show if a subclass genuinely lacked them.
+# (delegating to list_header/list_body/etc.) and for `image`/`table`/`bibpaper`/`graph`.
+# This port keeps the generic `image` (image_image/image_dummy), `bibpaper`
+# (bibpaper_header/bibpaper_bibpaper) and table-row parsing (parse_table_rows) here,
+# while LATEXBuilder overrides list/listnum/source/emlist/table directly. `graph` is a
+# non-goal and deliberately not defined: Compiler's dispatch gates on "does the builder
+# have a method with this name" (Test-ReviewBuilderMethod), so //graph produces the same
+# graceful "builder does not support command" error Ruby shows for a missing method.
 
 class ReviewBuilder {
     [bool] $Strict

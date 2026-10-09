@@ -341,14 +341,14 @@ Each milestone is independently demonstrable:
       `//source`/`//cmd`, footnotes, and core inline ops (b/code/tt/em/strong/i/u/sub/sup/
       href/kw/ruby/br/...). Verified byte-for-byte against the Ruby oracle for a
       representative chapter. `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation`
-      deferred to M5.
+      followed in M5.
 - [x] **M3 — Two-pass index builder wired in.** Cross-chapter `@<chapref>`/`@<chap>`/
       `@<title>` (chapter-level) and `@<list>`/`@<table>` via `otherchapter|id` syntax
       (item-level, through that chapter's own index without rendering it) resolve forward
       and backward against 2-chapter fixtures, with output verified against the Docker
       oracle. `@<img>`/`@<eq>` follow the identical code path and macro pattern
-      (`inline_img`/`inline_eq`) but full `//image`/`//texequation` block *rendering* —
-      and thus an end-to-end test of them — waits on M5.
+      (`inline_img`/`inline_eq`); the `//image`/`//texequation` block rendering they
+      point at followed in M5.
 - [x] **M4 — Real PDF output.** The hand-ported templates (`config.erb`/`layout.tex.erb`
       equivalents), colophon/author/history rendering, and the Docker-backed process
       runner wired into the full build sequence (`uplatex`×3 → conditional `mendex` →

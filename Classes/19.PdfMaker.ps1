@@ -3,11 +3,11 @@
 # ReviewProcessRunner (see 20.ExternalProcessRunner.ps1 and the README's "LaTeX
 # backend" section) rather than running them as native Windows processes.
 #
-# Gap (M4): project-local template overrides (<basedir>/layouts/layout.tex.erb,
-# layouts/config-local.tex.erb, sty/*.erb) require the restricted ERB-subset
-# interpreter planned for a later milestone. If a project supplies any of these, this
-# throws a clear "not yet supported" error rather than silently ignoring the override --
-# tracked as a known M4 limitation, needed before FirstStepReVIEW-v3 (M6) can build.
+# Project-local template overrides (<basedir>/layouts/layout.tex.erb,
+# layouts/config-local.tex.erb, sty/*.erb) are rendered through ReviewErbLiteTemplate
+# (18b.ErbLiteTemplate.ps1); constructs outside its restricted grammar raise a clear
+# "unsupported ERB construct" error. Project paths (locale.yml, sty/, layouts/, loose
+# *.tex) resolve against BaseDir (the config.yml directory), not Ruby's Dir.pwd.
 
 class ReviewPdfMaker {
     [ReviewConfigure] $Config

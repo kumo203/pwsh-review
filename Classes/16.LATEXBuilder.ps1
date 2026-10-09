@@ -1,10 +1,9 @@
-# Port of review/lib/review/latexbuilder.rb -- the pass-2 LaTeX builder (v1's only real
-# output target). M2 scope: headlines (+nonum/notoc/nodisp/column tagged sections),
-# paragraphs, ul/ol/dl, emlist/emlistnum/list/listnum/source/cmd/read/lead, footnote +
-# inline_fn/inline_endnote, and the inline formatting ops (b/code/tt/tti/ttb/em/strong/
-# i/u/sub/sup/ins/del/ami/bou/href/kw/ruby/br). table/image/bibpaper/graph/texequation
-# are deferred to M5 (see README non-goals) -- simply not defined here, so Compiler's
-# "does not support command" graceful error path covers them in the meantime.
+# Port of review/lib/review/latexbuilder.rb (5.9.0) -- the pass-2 LaTeX builder (v1's
+# only real output target). Covers everything exercised by Re:VIEW's samples/syntax-book
+# and FirstStepReVIEW-v3 (byte-identical to the oracle; see tests/Golden). Not defined
+# here (non-goals, see README): //graph and math_format: imgmath -- Compiler's
+# "does not support command" error path covers //graph; //texequation renders as plain
+# LaTeX.
 
 class ReviewLATEXBuilder : ReviewBuilder {
     hidden [ReviewLaTeXEscaper] $Escaper
