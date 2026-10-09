@@ -147,15 +147,17 @@ class ReviewColumnIndex : ReviewIndex {}
 class ReviewImageIndex : ReviewIndex {
     hidden [object] $Chapter
 
+    hidden [ReviewImageFinder] $Finder
+
     ReviewImageIndex([object]$Chapter) : base() {
         $this.Chapter = $Chapter
+        $this.Finder = [ReviewImageFinder]::new($Chapter)
     }
 
-    # TODO (deferred to M5, when //image blocks are compiled): port
-    # review/lib/review/book/image_finder.rb's extension-probing lookup. Until then this
-    # throws rather than silently returning a wrong path.
+    [void] AddFoundEntry([string]$Path) { $this.Finder.AddEntry($Path) }
+
     [object] FindPath([string]$Id) {
-        throw [ReviewApplicationError]::new("image path resolution not yet implemented for '$Id' (deferred to M5)")
+        return $this.Finder.FindPath($Id)
     }
 }
 

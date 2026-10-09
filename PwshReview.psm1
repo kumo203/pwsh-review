@@ -11,6 +11,7 @@ $script:ClassFiles = @(
     'Classes\03.Configure.ps1'
     'Classes\04.I18n.ps1'
     'Classes\05.Catalog.ps1'
+    'Classes\05b.ImageFinder.ps1'
     'Classes\06.BookIndex.ps1'
     'Classes\07.BookUnit.ps1'
     'Classes\08.Chapter.ps1'

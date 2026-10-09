@@ -108,6 +108,12 @@ class ReviewBookUnit {
         return $this.IndepImageIndex.Get($Id)
     }
 
+    # Mirrors BookUnit#image_bound? -- truthy iff the image's resolved file path exists
+    # (ReviewImageFinder.FindPath returns $null, not a throw, when nothing matches).
+    [bool] ImageBound([string]$Id) {
+        return $null -ne $this.GetImage($Id).Path()
+    }
+
     [object] NextChapter() {
         return $this.Book.NextChapter($this)
     }
