@@ -11,29 +11,31 @@ below) rather than assuming a native TeX Live/MiKTeX install.
 
 ## Status
 
-**M0 through M3 are complete.** The module scaffold, Docker-backed process runner,
+**M0 through M4 are complete.** The module scaffold, Docker-backed process runner,
 `Configure`/`Catalog`/Book model, the full markup parser (`Compiler`), the pass-1 index
-builder, and a useful subset of the LaTeX builder (headlines, paragraphs, lists,
-captioned code blocks, footnotes, core inline formatting, and cross-chapter reference
-resolution) are all in place and tested — 51 Pester tests pass.
+builder, a useful subset of the LaTeX builder (headlines, paragraphs, lists, captioned
+code blocks, footnotes, core inline formatting, cross-chapter reference resolution), and
+the full PDF-maker orchestration (hand-ported LaTeX templates, colophon/author/history
+rendering, and the Docker-backed `uplatex`×3 → `mendex` (conditional) → `dvipdfmx`
+pipeline) are all in place and tested — 56 Pester tests pass.
 
-A representative chapter was compiled through this port and independently verified
-**byte-for-byte identical** against the real Ruby Re:VIEW running in the
-`review-oracle:5.9` Docker container (captured as a permanent regression test in
-`tests/Unit/LATEXBuilder.Tests.ps1`). Cross-chapter references — both chapter-level
-(`@<chapref>`, `@<chap>`, `@<title>`, forward and backward) and item-level (`@<list>`,
-`@<table>` via `otherchapter|id` syntax, resolving through that chapter's own index even
-though the chapter itself is never rendered) — are verified against 2-chapter fixtures,
-with the `\reviewlistref{}`/`\reviewtableref{}` output format double-checked against the
-Docker oracle (this surfaced a real gap: `LATEXBuilder` overrides the generic
-`inline_list`/`inline_table`/`inline_img`/`inline_eq` with TeX-native `\ref`/`\label`
-macro wrapping that a partial read of the 1469-line Ruby source had missed).
+**`Invoke-ReviewPdfMaker` produces a real, valid PDF end-to-end.** With deterministic
+inputs (pinned `date`/`urnid`), the generated `__REVIEW_BOOK__.tex` master file is
+**byte-for-byte identical** to the one the real Ruby Re:VIEW produces in the
+`review-oracle:5.9` Docker container — captured as a permanent regression test in
+`tests/Integration/PdfMaker.Tests.ps1`. A representative chapter's own compiled output
+was separately verified byte-for-byte identical too (`tests/Unit/LATEXBuilder.Tests.ps1`).
+Cross-chapter references — both chapter-level (`@<chapref>`, `@<chap>`, `@<title>`,
+forward and backward) and item-level (`@<list>`, `@<table>` via `otherchapter|id`
+syntax) — are also verified against 2-chapter fixtures and the Docker oracle.
 
-Still to do: `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation` LaTeX *rendering*
-(the cross-reference *lookups* above work already; the block syntax that defines a table/
-image itself doesn't render yet), the ERB template layer, and the actual PDF-maker
-orchestration that shells out to `uplatex`/`dvipdfmx`/`mendex`. See
-[Roadmap](#roadmap) below.
+Still to do: `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation` LaTeX
+*rendering* (the cross-reference *lookups* for list/table work already; the block
+syntax that defines a table/image itself doesn't render yet), and the restricted
+ERB-subset interpreter for project-local template overrides (`layouts/layout.tex.erb`,
+`layouts/config-local.tex.erb`, `sty/*.erb`) — currently these throw a clear
+"not yet supported" error rather than silently ignoring the override, which blocks
+building `FirstStepReVIEW-v3` (M6) until implemented. See [Roadmap](#roadmap) below.
 
 ## Scope (v1)
 
@@ -72,6 +74,17 @@ Import-Module .\PwshReview.psd1
 
 # Resolve a Re:VIEW project's config.yml + catalog.yml and print the ordered chapter list
 Test-ReviewCatalog -Path .\path\to\articles\config.yml
+
+# Build config.yml into a real PDF (shells uplatex/mendex/dvipdfmx into Docker) --
+# the project needs its own sty/ directory vendoring the review-jsbook .sty/.cls files
+# (as a real Re:VIEW project does; see Resources/latex/review-jsbook/ in this repo for
+# copies), though this port also auto-falls-back to its own bundled copies if a project
+# doesn't provide one.
+Invoke-ReviewPdfMaker -Path .\path\to\articles\config.yml
+
+# Keep the build directory (./<bookname>-pdf/) instead of deleting it, and tolerate
+# chapters that failed to compile:
+Invoke-ReviewPdfMaker -Path .\path\to\articles\config.yml -KeepBuildDir -IgnoreCompileErrors
 ```
 
 ## Running the tests
@@ -116,22 +129,35 @@ Classes/
   15.IndexBuilder.ps1        # pass-1 silent indexing builder
   16.LATEXBuilder.ps1        # pass-2 LaTeX builder (M2 subset -- see Status)
   17.Converter.ps1           # one Compiler + one Builder instance per book
+  18.LaTeXBox.ps1            # tcolorbox minicolumn styling (latexbox.rb)
   20.ExternalProcessRunner.ps1  # Docker-backed shell-out layer (see below)
+  19.PdfMaker.ps1            # orchestration (pdfmaker.rb) -- loaded after 20 despite the
+                              #   filename number: array ORDER in PwshReview.psm1 controls
+                              #   load order, not filename prefixes, since PdfMaker
+                              #   references [ReviewProcessRunner] by type literal
   [planned, not yet implemented — see Roadmap:]
-  LaTeXBox.ps1               # tcolorbox minicolumn styling
   ErbLiteTemplate.ps1        # restricted ERB-subset interpreter for project-local overrides
-  LatexTemplates.ps1         # hand-ported config.erb / layout.tex.erb equivalents
-  PdfMaker.ps1               # orchestration (mirrors review/lib/review/pdfmaker.rb)
+Private/
+  LatexTemplates.ps1         # hand-ported config.erb / layout.tex.erb (New-ReviewLatexConfigBlock/
+                              #   New-ReviewLatexLayout) -- plain functions, not class methods,
+                              #   specifically so they can take a duck-typed binding parameter
+                              #   without a forward-reference to ReviewPdfMaker
+  ConvertTo-ReviewArgv.ps1   # minimal shellsplit-equivalent for texoptions/dvioptions strings
 Public/
-  Test-ReviewCatalog.ps1     # load + validate a book's catalog.yml (implemented)
-  [planned:] Invoke-ReviewPdfMaker.ps1, ConvertTo-ReviewLatex.ps1
+  Test-ReviewCatalog.ps1     # load + validate a book's catalog.yml
+  Invoke-ReviewPdfMaker.ps1  # build config.yml -> PDF (the module's main entry point)
+  [planned:] ConvertTo-ReviewLatex.ps1
 Resources/
   i18n/i18n.yml              # locale data (copied from review/lib/review/i18n.yml)
-  [planned:] latex/review-jsbook/*, latex/review-jlreq/*
+  latex/review-jsbook/*      # .sty/.cls files copied byte-for-byte from
+                              #   review/templates/latex/review-jsbook/ -- pure LaTeX,
+                              #   interpreted by the engine itself, nothing to port
+  [planned:] latex/review-jlreq/*
 tests/
-  Unit/           # Pester, fast, no Docker -- includes a golden-diff regression test
-                  # captured from a real review-oracle:5.9 run (see Status)
-  Integration/    # Pester, Docker-gated (skips if Docker unavailable)
+  Unit/           # Pester, fast, no Docker -- includes golden-diff regression tests
+                  # captured from real review-oracle:5.9 runs (see Status)
+  Integration/    # Pester, Docker-gated (skips if Docker unavailable) -- includes the
+                  # full real-PDF-build + oracle .tex diff test
   [planned:] Golden/, tools/Update-GoldenFixtures.ps1
 ```
 
@@ -179,6 +205,22 @@ documented in code comments where they bite:
   a *character* out of the resulting string instead of the first array element — no
   error, just a wrong-typed value a few lines later. Force array wrapping with `@(...)`
   whenever the result might be indexed.
+- **A `System.Object[]` does not bind to a .NET generic constructor's `IEnumerable<T>`
+  overload, even when every element is actually a `T`** — `[List[string]]::new(@($arr))`
+  throws "Cannot find an overload for 'new' and the argument count: 1" (a misleading
+  message for what's actually a type mismatch, not an arity mismatch) unless `$arr` is
+  first cast to `[string[]]`. This is specific to .NET generic type instantiation;
+  ordinary PowerShell-defined class methods accept an `Object[]` for a declared
+  `[string[]]` parameter without complaint (confirmed both ways).
+- **`[CmdletBinding()]` already provides a built-in `-Debug` common parameter** — a
+  cmdlet's own parameter cannot be named `Debug` without colliding with it (renamed to
+  `-KeepBuildDir` in `Invoke-ReviewPdfMaker`).
+- Ruby's YAML loader (Psych) **auto-parses an unquoted ISO-date-looking scalar
+  (`date: 2026-10-09`) into a `Date` object**, not a string — this is a Ruby/YAML quirk
+  the real `review-pdfmaker` is itself not immune to (passing such a value through its
+  own `Date.parse` crashes with a `TypeError`), encountered while building a byte-for-byte
+  comparison fixture against the oracle. Always quote date-like YAML scalars
+  (`date: "2026-10-09"`).
 
 ### Two-pass compile/index architecture
 
@@ -238,14 +280,19 @@ Each milestone is independently demonstrable:
       oracle. `@<img>`/`@<eq>` follow the identical code path and macro pattern
       (`inline_img`/`inline_eq`) but full `//image`/`//texequation` block *rendering* —
       and thus an end-to-end test of them — waits on M5.
-- [ ] **M4 — Real PDF output for a minimal fixture.** The hand-ported templates plus the
-      Docker-backed process runner wired into the full build sequence, producing a real
-      `.pdf`. First milestone that requires Docker Desktop running.
+- [x] **M4 — Real PDF output.** The hand-ported templates (`config.erb`/`layout.tex.erb`
+      equivalents), colophon/author/history rendering, and the Docker-backed process
+      runner wired into the full build sequence (`uplatex`×3 → conditional `mendex` →
+      `dvipdfmx`) via `Invoke-ReviewPdfMaker`, producing a real `.pdf`. With deterministic
+      inputs, the generated `__REVIEW_BOOK__.tex` is byte-for-byte identical to the real
+      Ruby Re:VIEW oracle's. First milestone that requires Docker Desktop running.
 - [ ] **M5 — Broaden syntax coverage** against Re:VIEW's own `samples/syntax-book` and
-      `samples/debug-book` fixtures via Docker golden-diffing.
-- [ ] **M6 — Full `FirstStepReVIEW-v3` end-to-end** vs. the Docker oracle, including the
-      ERB-subset interpreter, full `Configure` schema coverage, and colophon/author
-      rendering.
+      `samples/debug-book` fixtures via Docker golden-diffing. Adds `//table`/`//image`/
+      `//bibpaper`/`//graph`/`//texequation` LaTeX rendering.
+- [ ] **M6 — Full `FirstStepReVIEW-v3` end-to-end** vs. the Docker oracle. Needs the
+      ERB-subset interpreter (that project uses a real `layouts/config-local.tex.erb`,
+      which this port currently refuses with a clear error) plus full `Configure` schema
+      coverage.
 
 ## Explicit non-goals / gaps (v1)
 

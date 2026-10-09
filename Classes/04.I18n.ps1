@@ -16,6 +16,31 @@ class ReviewI18n {
 
     static [ReviewI18n] $Instance = $null
 
+    # Minimal Ruby Time#strftime-subset, covering only the directives actually used by
+    # i18n.yml's 'date_format' strings across locales ('%Y年%-m月%-d日' for ja/zh,
+    # '%b. %e, %Y' for en): %Y (4-digit year), %m/%-m (zero-padded/unpadded month),
+    # %d/%-d (zero-padded/unpadded day), %b (abbreviated month name), %e (day,
+    # space-padded to 2 chars). Anything else passes through literally.
+    static [string] Strftime([datetime]$Date, [string]$Format) {
+        $sb = [System.Text.StringBuilder]::new()
+        $i = 0
+        while ($i -lt $Format.Length) {
+            if ($Format[$i] -eq '%' -and ($i + 1) -lt $Format.Length) {
+                $rest = $Format.Substring($i + 1)
+                if ($rest.StartsWith('-m')) { [void]$sb.Append([string]$Date.Month); $i += 3; continue }
+                if ($rest.StartsWith('-d')) { [void]$sb.Append([string]$Date.Day); $i += 3; continue }
+                if ($rest.StartsWith('Y')) { [void]$sb.Append($Date.ToString('yyyy')); $i += 2; continue }
+                if ($rest.StartsWith('m')) { [void]$sb.Append($Date.ToString('MM')); $i += 2; continue }
+                if ($rest.StartsWith('d')) { [void]$sb.Append($Date.ToString('dd')); $i += 2; continue }
+                if ($rest.StartsWith('b')) { [void]$sb.Append($Date.ToString('MMM', [System.Globalization.CultureInfo]::InvariantCulture)); $i += 2; continue }
+                if ($rest.StartsWith('e')) { [void]$sb.Append($Date.Day.ToString().PadLeft(2)); $i += 2; continue }
+            }
+            [void]$sb.Append($Format[$i])
+            $i++
+        }
+        return $sb.ToString()
+    }
+
     [string] $Locale
     [hashtable] $Store
 
@@ -131,9 +156,20 @@ class ReviewI18n {
             $argList.RemoveAt($removeIdx[$i])
         }
 
+        # Matches Ruby exactly: args_matched is computed on frmt.count('%') -- a literal
+        # count of '%' characters still present at this point (almost always zero, since
+        # the real %% was replaced with ## earlier and any %pA-style tokens were already
+        # consumed above) -- BEFORE the ## -> %% restore on the next line. Getting this
+        # order/criterion wrong (e.g. counting %s/%d/%% token matches post-restore, as an
+        # earlier version of this file did) silently breaks any locale string containing
+        # a literal %% escape with no real substitution args, such as 'date_format'
+        # ('%%Y年%%-m月%%-d日'), which must pass through unprocessed-looking but still
+        # %%-unescaped via Sprintf.
+        $percentCharCount = ($frmt.ToCharArray() | Where-Object { $_ -eq '%' }).Count
+        $argsMatched = $percentCharCount -le $argList.Count
+
         $frmt = $frmt.Replace('##', '%%')
-        $remainingTokens = [regex]::Matches($frmt, '%[sd%]').Count
-        if ($remainingTokens -le $argList.Count) {
+        if ($argsMatched) {
             return [ReviewI18n]::Sprintf($frmt, $argList.ToArray())
         }
         return $frmt
