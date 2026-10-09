@@ -1,0 +1,20 @@
+# Build and run pwsh-review against a Re:VIEW project.
+#
+#   docker compose -f docker/compose.yaml build
+#   $env:REVIEW_PROJECT = "C:\path\to\book\articles"     # PowerShell
+#   docker compose -f docker/compose.yaml run --rm pwsh-review
+#   docker compose -f docker/compose.yaml run --rm pwsh-review pwsh-review-tex config.yml
+#
+# REVIEW_PROJECT (required) is the directory containing config.yml. Relative paths in a
+# compose file resolve against docker/, so use an absolute path.
+
+services:
+  pwsh-review:
+    image: pwsh-review:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ${REVIEW_PROJECT:?set REVIEW_PROJECT to the absolute path of the directory containing config.yml}:/work
+    working_dir: /work
+    command: ["pwsh-review-pdfmaker", "config.yml"]

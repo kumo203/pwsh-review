@@ -1,0 +1,10 @@
+# BuildKit reads <Dockerfile>.dockerignore next to docker/Dockerfile; the build context is
+# the repository root. Only the module sources and docker/bin are needed.
+*
+!PwshReview.psd1
+!PwshReview.psm1
+!Classes/
+!Private/
+!Public/
+!Resources/
+!docker/bin/

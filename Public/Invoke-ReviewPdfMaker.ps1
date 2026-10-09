@@ -4,9 +4,10 @@ function Invoke-ReviewPdfMaker {
         Builds a Re:VIEW project's config.yml into a PDF -- the analog of
         `review-pdfmaker config.yml [--debug] [--ignore-errors] [-y file1,file2]`.
     .DESCRIPTION
-        Shells every uplatex/mendex/dvipdfmx call into the review-oracle Docker
-        container (see the README's "LaTeX backend" section); Docker Desktop must be
-        running and the image must already be built/pulled.
+        By default shells every uplatex/mendex/dvipdfmx call into a TeX Docker container
+        (see the README's "LaTeX backend" section); Docker Desktop must be running and the
+        image must already be built/pulled. With -LatexBackend Native (the default inside
+        the pwsh-review image, via $env:PWSHREVIEW_LATEX_BACKEND) the tools run directly.
     .PARAMETER Path
         Path to the project's config.yml.
     .PARAMETER KeepBuildDir
@@ -22,7 +23,10 @@ function Invoke-ReviewPdfMaker {
         mirroring `review-pdfmaker -y file1,file2`.
     .PARAMETER DockerImage
         The Docker image to shell uplatex/mendex/dvipdfmx into. Defaults to
-        'review-oracle:5.9'.
+        'review-oracle:5.9'. Only used by the Docker backend.
+    .PARAMETER LatexBackend
+        'Docker' (run each tool in a container) or 'Native' (run tools from PATH).
+        Defaults to $env:PWSHREVIEW_LATEX_BACKEND, else Docker.
     #>
     [CmdletBinding()]
     param(
@@ -35,12 +39,16 @@ function Invoke-ReviewPdfMaker {
 
         [string[]]$Only,
 
-        [string]$DockerImage = 'review-oracle:5.9'
+        [string]$DockerImage = 'review-oracle:5.9',
+
+        [ValidateSet('Docker', 'Native')]
+        [string]$LatexBackend
     )
 
     $resolvedPath = (Resolve-Path -LiteralPath $Path).ProviderPath
     $maker = [ReviewPdfMaker]::new()
     $maker.DockerImage = $DockerImage
+    if ($LatexBackend) { $maker.LatexBackend = [ReviewLatexBackend]$LatexBackend }
     $maker.Execute($resolvedPath, [bool]$KeepBuildDir, [bool]$IgnoreCompileErrors, $Only)
 
     Get-Item -LiteralPath $maker.PdfFilePath()

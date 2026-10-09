@@ -35,6 +35,7 @@ class ReviewPdfMaker {
     [object] $BoxSetting
     [ReviewLaTeXEscaper] $Escaper
     [string] $DockerImage = 'review-oracle:5.9'
+    [ReviewLatexBackend] $LatexBackend = [ReviewProcessRunner]::DefaultBackend()
     [bool] $Debug = $false
 
     [string] PdfFilePath() {
@@ -242,7 +243,7 @@ class ReviewPdfMaker {
     # the project-local copy_sty calls (above) layer project overrides on top of.
     [void] CopyBundledStyFiles() {
         $moduleRoot = Split-Path -Parent $PSScriptRoot
-        $bundled = Join-Path $moduleRoot 'Resources\latex\review-jsbook'
+        $bundled = Join-Path $moduleRoot 'Resources/latex/review-jsbook'
         if (-not (Test-Path -LiteralPath $bundled)) { return }
         foreach ($f in Get-ChildItem -LiteralPath $bundled -File) {
             $dest = Join-Path $this.Path $f.Name
@@ -453,7 +454,7 @@ class ReviewPdfMaker {
 
     [string] LatexConfig() {
         $result = New-ReviewLatexConfigBlock -Maker $this
-        $localConfigFile = Join-Path $this.BaseDir 'layouts\config-local.tex.erb'
+        $localConfigFile = Join-Path $this.BaseDir 'layouts/config-local.tex.erb'
         if (Test-Path -LiteralPath $localConfigFile -PathType Leaf) {
             $result += "%% BEGIN: config-local.tex.erb`n"
             $result += $this.RenderProjectErb($localConfigFile)
@@ -472,7 +473,7 @@ class ReviewPdfMaker {
             throw [ReviewApplicationError]::new("File $titleFile is not found.")
         }
 
-        $layoutFile = Join-Path $this.BaseDir 'layouts\layout.tex.erb'
+        $layoutFile = Join-Path $this.BaseDir 'layouts/layout.tex.erb'
         if (Test-Path -LiteralPath $layoutFile -PathType Leaf) {
             return $this.RenderProjectErb($layoutFile)
         }
@@ -559,8 +560,8 @@ class ReviewPdfMaker {
                 }
             }
 
-            $runner = [ReviewProcessRunner]::new($this.Path, $this.DockerImage)
-            $runner.AssertDockerReady()
+            $runner = [ReviewProcessRunner]::new($this.Path, $this.DockerImage, $this.LatexBackend)
+            $runner.AssertReady()
 
             1..2 | ForEach-Object {
                 [void]$runner.RunOrRaise($texCommand, (@($texOptions) + @("$($this.MasterTex).tex")))

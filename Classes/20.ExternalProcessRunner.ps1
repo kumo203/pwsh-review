@@ -1,15 +1,24 @@
-# Docker-backed external process runner.
+# External process runner for the LaTeX toolchain (uplatex/mendex/dvipdfmx).
 #
 # Mirrors review/lib/review/pdfmaker.rb's system_with_info/system_or_raise, both of which
 # wrap Open3.capture2e (merged stdout+stderr, no stdin) around a single external command.
 #
-# Deviation from Ruby (user-approved): plain Windows has no uplatex/dvipdfmx/mendex on
-# PATH, and a native TeX Live/MiKTeX install is a multi-GB ask we're avoiding for v1. So
-# every command this runner executes is run *inside* the review-oracle Docker container
-# via `docker run --rm -v <WorkDir>:/work -w /work <DockerImage> <command> <args...>`,
-# with WorkDir being the same per-build directory Ruby's PDFMaker would Dir.chdir into.
-# This keeps the rest of the pipeline (PdfMaker.BuildPdf's sequencing, error handling)
-# identical to the Ruby original — only the transport for each shell-out changes.
+# Two backends, differing only in transport (PdfMaker.BuildPdf's sequencing and error
+# handling are identical either way):
+#
+# - 'Docker' (default on a host): plain Windows has no uplatex/dvipdfmx/mendex on PATH,
+#   and a native TeX Live/MiKTeX install is a multi-GB ask we're avoiding. So each command
+#   runs *inside* a TeX container via
+#   `docker run --rm -v <WorkDir>:/work -w /work <DockerImage> <command> <args...>`,
+#   with WorkDir being the per-build directory Ruby's PDFMaker would Dir.chdir into.
+# - 'Native': the command runs directly with WorkDir as its working directory, exactly
+#   like Ruby. Used inside the pwsh-review Docker image (docker/), which bundles TeX Live
+#   and sets PWSHREVIEW_LATEX_BACKEND=Native.
+
+enum ReviewLatexBackend {
+    Docker
+    Native
+}
 
 class ReviewProcessResult {
     [string]   $CommandLine
@@ -21,6 +30,7 @@ class ReviewProcessResult {
 class ReviewProcessRunner {
     [string] $DockerImage = 'review-oracle:5.9'
     [string] $WorkDir
+    [ReviewLatexBackend] $Backend = [ReviewLatexBackend]::Docker
 
     ReviewProcessRunner([string]$WorkDir) {
         $this.WorkDir = $WorkDir
@@ -29,6 +39,35 @@ class ReviewProcessRunner {
     ReviewProcessRunner([string]$WorkDir, [string]$DockerImage) {
         $this.WorkDir = $WorkDir
         $this.DockerImage = $DockerImage
+    }
+
+    ReviewProcessRunner([string]$WorkDir, [string]$DockerImage, [ReviewLatexBackend]$Backend) {
+        $this.WorkDir = $WorkDir
+        $this.DockerImage = $DockerImage
+        $this.Backend = $Backend
+    }
+
+    # The backend selected by $env:PWSHREVIEW_LATEX_BACKEND ('Docker' or 'Native'),
+    # defaulting to Docker when unset.
+    static [ReviewLatexBackend] DefaultBackend() {
+        $fromEnv = $env:PWSHREVIEW_LATEX_BACKEND
+        if ([string]::IsNullOrWhiteSpace($fromEnv)) { return [ReviewLatexBackend]::Docker }
+        $parsed = [ReviewLatexBackend]::Docker
+        if (-not [Enum]::TryParse([ReviewLatexBackend], $fromEnv, $true, [ref]$parsed)) {
+            throw [ReviewApplicationError]::new("PWSHREVIEW_LATEX_BACKEND must be 'Docker' or 'Native', got '$fromEnv'.")
+        }
+        return $parsed
+    }
+
+    # Verifies the selected backend can run commands before a build starts.
+    [void] AssertReady() {
+        if ($this.Backend -eq [ReviewLatexBackend]::Native) {
+            if (-not (Get-Command uplatex -CommandType Application -ErrorAction SilentlyContinue)) {
+                throw [ReviewApplicationError]::new('Native LaTeX backend selected but uplatex is not on PATH. Install TeX Live, or use the Docker backend.')
+            }
+            return
+        }
+        $this.AssertDockerReady()
     }
 
     # Verifies `docker` is reachable and that $DockerImage exists locally, raising a clear
@@ -78,12 +117,19 @@ class ReviewProcessRunner {
     # full content, which is what RunOrRaise's error messages and golden-diff log
     # comparisons actually depend on.
     [ReviewProcessResult] Run([string]$Command, [string[]]$Arguments) {
-        $dockerArgs = $this.BuildDockerArgs($Command, $Arguments)
-        $commandLine = "docker $($dockerArgs -join ' ')"
-
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
-        $psi.FileName = 'docker'
-        foreach ($a in $dockerArgs) { $psi.ArgumentList.Add($a) }
+        if ($this.Backend -eq [ReviewLatexBackend]::Native) {
+            $psi.FileName = $Command
+            $psi.WorkingDirectory = $this.WorkDir
+            foreach ($a in $Arguments) { $psi.ArgumentList.Add($a) }
+            $commandLine = "$Command $($Arguments -join ' ')"
+        }
+        else {
+            $dockerArgs = $this.BuildDockerArgs($Command, $Arguments)
+            $psi.FileName = 'docker'
+            foreach ($a in $dockerArgs) { $psi.ArgumentList.Add($a) }
+            $commandLine = "docker $($dockerArgs -join ' ')"
+        }
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
         $psi.RedirectStandardInput = $false

@@ -91,6 +91,20 @@ Invoke-ReviewPdfMaker -Path .\path\to\articles\config.yml -KeepBuildDir -IgnoreC
 ConvertTo-ReviewLatex -Path .\path\to\articles\config.yml -OutputDirectory .\out-tex
 ```
 
+### All-in-one Docker image
+
+[`docker/`](docker/README.md) builds a `pwsh-review` Linux image with PowerShell 7, this
+module and TeX Live, with no Ruby. Inside it the TeX tools run directly
+(`PWSHREVIEW_LATEX_BACKEND=Native`), so the host needs nothing but Docker:
+
+```powershell
+docker build -f docker/Dockerfile -t pwsh-review:latest .
+docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-pdfmaker config.yml
+```
+
+`Invoke-ReviewPdfMaker -LatexBackend Native` also works on any machine that has TeX Live
+on `PATH`.
+
 ### Deviations from Ruby Re:VIEW
 
 - Ruby resolves `locale.yml`, `sty/`, `layouts/` and loose `*.tex` against the **current

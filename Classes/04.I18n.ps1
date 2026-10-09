@@ -51,9 +51,9 @@ class ReviewI18n {
 
     ReviewI18n([string]$Locale) {
         $this.Locale = $Locale
-        $defaultPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'Resources\i18n\i18n.yml'
+        $defaultPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'Resources/i18n/i18n.yml'
         if (-not (Test-Path -LiteralPath $defaultPath)) {
-            $defaultPath = Join-Path $PSScriptRoot '..\Resources\i18n\i18n.yml'
+            $defaultPath = Join-Path $PSScriptRoot '../Resources/i18n/i18n.yml'
         }
         $this.Store = [ReviewYamlLoader]::SafeLoadFile($defaultPath)
     }
