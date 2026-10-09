@@ -174,7 +174,12 @@ review_version: 5
             $config = [ReviewConfigure]::Create('pdfmaker', (Join-Path $dir 'config.yml'), $null)
             $book = [ReviewBookBase]::new($dir, $config)
             $chap = $book.Chapters()[0]
-            $chap.FormatNumber($true) | Should -Be ([ReviewI18n]::T('chapter', 1))
+            # Literal expected string, not a second call to ReviewI18n::T -- comparing
+            # against the same (possibly broken) function call would pass tautologically
+            # even if substitution were silently broken, which it once was (ReviewI18n's
+            # $Args-named parameter collided with PowerShell's automatic $args and
+            # silently dropped all format arguments).
+            $chap.FormatNumber($true) | Should -Be '第1章'
             $chap.FormatNumber($false) | Should -Be '1'
         }
 
@@ -189,7 +194,9 @@ review_version: 5
             $config = [ReviewConfigure]::Create('pdfmaker', (Join-Path $dir 'config.yml'), $null)
             $book = [ReviewBookBase]::new($dir, $config)
             $chap = $book.Chapters()[0]
-            $chap.FormatNumber($true) | Should -Be ([ReviewI18n]::T('appendix', 1))
+            # Literal expected string -- see the note in the previous test for why this
+            # must not be a second call to ReviewI18n::T.
+            $chap.FormatNumber($true) | Should -Be '付録A'
         }
     }
 }

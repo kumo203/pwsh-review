@@ -16,6 +16,13 @@ $script:ClassFiles = @(
     'Classes\08.Chapter.ps1'
     'Classes\09.Part.ps1'
     'Classes\10.BookBase.ps1'
+    'Classes\11.SecCounter.ps1'
+    'Classes\12.LaTeXEscaper.ps1'
+    'Classes\13.Compiler.ps1'
+    'Classes\14.Builder.ps1'
+    'Classes\15.IndexBuilder.ps1'
+    'Classes\16.LATEXBuilder.ps1'
+    'Classes\17.Converter.ps1'
     'Classes\20.ExternalProcessRunner.ps1'
 )
 

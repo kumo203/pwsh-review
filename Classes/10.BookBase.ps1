@@ -156,7 +156,10 @@ class ReviewBookBase {
             # stays empty rather than being populated from bib.re for v1.
             $this.BibpaperIndex = [ReviewBibpaperIndex]::new()
         }
-        foreach ($chap in $this.Chapters()) { $chap.GenerateIndexes($true) }
+        # Ruby: self.each_chapter(&:generate_indexes) calls with no args (use_bib
+        # defaults false) -- book-level bib indexing above is handled by a separate Bib
+        # object (deferred/stubbed, see plan non-goals), not by each chapter's own pass.
+        foreach ($chap in $this.Chapters()) { $chap.GenerateIndexes($false) }
         foreach ($part in $this.Parts()) { $part.GenerateIndexes($false) }
         $this.ChapterIndexCache = $this.CreateChapterIndex()
     }

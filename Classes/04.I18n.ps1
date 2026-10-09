@@ -70,8 +70,8 @@ class ReviewI18n {
         return [ReviewI18n]::Instance.Translate($Str, $null)
     }
 
-    static [string] T([string]$Str, [object]$Args) {
-        return [ReviewI18n]::Instance.Translate($Str, $Args)
+    static [string] T([string]$Str, [object]$FormatArgs) {
+        return [ReviewI18n]::Instance.Translate($Str, $FormatArgs)
     }
 
     [object] Get([string]$Word) {
@@ -86,23 +86,23 @@ class ReviewI18n {
         $this.Store[$this.Locale][$Word] = $Str
     }
 
-    [string] Translate([string]$Str, [object]$Args) {
+    [string] Translate([string]$Str, [object]$FormatArgs) {
         $raw = $this.Get($Str)
         if ($null -eq $raw) { return $Str }
 
         $frmt = [string]$raw
         $frmt = $frmt.Replace('%%', '##')
 
-        if ($Args -is [array]) {
+        if ($FormatArgs -is [array]) {
             $argList = [System.Collections.Generic.List[object]]::new()
-            $argList.AddRange([object[]]$Args)
+            $argList.AddRange([object[]]$FormatArgs)
         }
-        elseif ($null -eq $Args -and $frmt -notmatch '%') {
+        elseif ($null -eq $FormatArgs -and $frmt -notmatch '%') {
             $argList = [System.Collections.Generic.List[object]]::new()
         }
         else {
             $argList = [System.Collections.Generic.List[object]]::new()
-            $argList.Add($Args)
+            $argList.Add($FormatArgs)
         }
 
         $percentTokenPattern = [regex]::new('%[A-Za-z]{1,3}')
@@ -148,7 +148,7 @@ class ReviewI18n {
     # Minimal Kernel#sprintf-equivalent: substitutes %s/%d tokens in order with Args,
     # leaving a literal %% as a single %. Sufficient for Re:VIEW's locale strings, which
     # never use width/precision specifiers.
-    hidden static [string] Sprintf([string]$Format, [object[]]$Args) {
+    hidden static [string] Sprintf([string]$Format, [object[]]$FormatArgs) {
         $sb = [System.Text.StringBuilder]::new()
         $argIdx = 0
         $i = 0
@@ -162,7 +162,7 @@ class ReviewI18n {
                     continue
                 }
                 elseif ($next -eq 's' -or $next -eq 'd') {
-                    $value = if ($argIdx -lt $Args.Count) { $Args[$argIdx] } else { $null }
+                    $value = if ($argIdx -lt $FormatArgs.Count) { $FormatArgs[$argIdx] } else { $null }
                     $argIdx++
                     [void]$sb.Append([string]$value)
                     $i += 2
