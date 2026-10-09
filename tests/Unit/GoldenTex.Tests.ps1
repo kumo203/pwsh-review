@@ -4,7 +4,7 @@ Import-Module $moduleManifest -Force
 # Byte-for-byte comparison of the port's generated LaTeX against goldens captured from the
 # real Ruby Re:VIEW 5.9.0 (tests/tools/Update-GoldenFixtures.ps1). No Docker needed:
 # ConvertTo-ReviewLatex stops before the LaTeX toolchain.
-$goldenRoot = Join-Path $PSScriptRoot '..\Golden'
+$goldenRoot = Join-Path $PSScriptRoot '..\Golden\latex'
 $fixtureCases = foreach ($dir in Get-ChildItem -LiteralPath $goldenRoot -Directory) {
     @{ Name = $dir.Name; GoldenDir = $dir.FullName }
 }

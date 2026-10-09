@@ -10,6 +10,7 @@
         'Invoke-ReviewPdfMaker'
         'Test-ReviewCatalog'
         'ConvertTo-ReviewLatex'
+        'Invoke-ReviewEpubMaker'
     )
     CmdletsToExport    = @()
     VariablesToExport  = @()

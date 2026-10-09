@@ -1,7 +1,7 @@
 # pwsh-review Docker image
 
 A single Linux image that contains **everything** needed to turn a Re:VIEW project into a
-PDF with the PowerShell port. The host only needs Docker.
+PDF or an EPUB3 with the PowerShell port. The host only needs Docker.
 
 ```
 pwsh-review (debian:bookworm-slim)
@@ -9,12 +9,14 @@ pwsh-review (debian:bookworm-slim)
 │     the same LaTeX packages as the Ruby review-oracle:5.9 image
 ├── PowerShell 7 + powershell-yaml
 ├── PwshReview module   (/usr/local/share/powershell/Modules/PwshReview)
-└── commands: pwsh-review-pdfmaker, pwsh-review-tex
+└── commands: pwsh-review-pdfmaker, pwsh-review-epubmaker, pwsh-review-tex
 ```
 
 There is **no Ruby Re:VIEW** in this image. Inside it, the module runs the TeX tools
 directly (`PWSHREVIEW_LATEX_BACKEND=Native`). On a Windows host without this image, the
 module instead starts a TeX container for each tool call (the default `Docker` backend).
+EPUB needs no external tools at all (the module writes the zip itself), so it works the
+same inside and outside the image.
 
 ## Files
 
@@ -24,6 +26,7 @@ module instead starts a TeX container for each tool call (the default `Docker` b
 | `Dockerfile.dockerignore` | Limits the build context to the module sources and `docker/bin`. |
 | `compose.yaml` | Build + run with Docker Compose, mounting a project at `/work`. |
 | `bin/pwsh-review-pdfmaker.ps1` | `review-pdfmaker`-style CLI for `Invoke-ReviewPdfMaker`. |
+| `bin/pwsh-review-epubmaker.ps1` | `review-epubmaker`-style CLI for `Invoke-ReviewEpubMaker`. |
 | `bin/pwsh-review-tex.ps1` | CLI for `ConvertTo-ReviewLatex` (LaTeX sources only). |
 
 ## Build
@@ -41,13 +44,14 @@ Build arguments: `POWERSHELL_VERSION` (default `7.6.6`) and `POWERSHELL_YAML_VER
 
 ## Use
 
-Run from the directory that contains your project's `config.yml`. The PDF
-(`<bookname>.pdf`) is written next to it.
+Run from the directory that contains your project's `config.yml`. The output
+(`<bookname>.pdf` / `<bookname>.epub`) is written next to it.
 
 ```powershell
 # PowerShell
 docker run --rm -v "${PWD}:/work" pwsh-review                      # = pwsh-review-pdfmaker config.yml
 docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-pdfmaker config.yml --debug
+docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-epubmaker config.yml
 docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-tex config.yml out-tex
 ```
 
@@ -74,6 +78,11 @@ Same options as Ruby's `review-pdfmaker`:
 | `--debug` | Keep the build directory `<bookname>-pdf/` (with all generated `.tex`). |
 | `--ignore-errors` | Build the PDF even if some chapters fail to compile. |
 | `-y a,b` / `--only a,b` | Build only the named files. |
+
+### `pwsh-review-epubmaker`
+
+Same options as Ruby's `review-epubmaker`: `[config.yml]`, `--debug` (keep
+`<bookname>-epub/`, which contains the unzipped package), `-y a,b` / `--only a,b`.
 
 ### `pwsh-review-tex`
 
@@ -102,11 +111,11 @@ PS /work> Invoke-ReviewPdfMaker -Path config.yml -KeepBuildDir
 ## Reserved for future features
 
 The Dockerfile has a commented-out section with the extra tools the Ruby image ships,
-ready to re-enable when the port grows the matching feature:
+ready to re-enable when the port grows the matching feature. (EPUB itself needed none of
+them: the Ruby image's `zip` command is replaced by .NET's built-in zip support.)
 
 | Tool | Needed for |
 |---|---|
-| `zip` (**already installed**) | EPUB packaging (`epubmaker.zip_stage1`/`zip_stage2`) |
-| Node.js + Playwright + CJK/emoji fonts (~350 MB) | Browser-based rendering, e.g. `math_format: imgmath` with the Playwright converter |
+| Node.js + Playwright + CJK/emoji fonts (~350 MB) | Browser-based rendering, e.g. `math_format: imgmath` with the Playwright converter, webmaker-style HTML |
 | MeCab | Japanese index readings (`pdfmaker.makeindex_mecab`) |
 | pandoc | Markdown → Re:VIEW conversion |

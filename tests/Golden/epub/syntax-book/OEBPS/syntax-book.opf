@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" xml:lang="ja" prefix="ebpaj: http://www.ebpaj.jp/">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title id="title">Re:VIEW文法使用例</dc:title>
+    <meta refines="#title" property="file-as">リビューブンポウシヨウレイ</meta>
+    <dc:language id="language">ja</dc:language>
+    <dc:date id="date">2018-10-16</dc:date>
+    <meta property="dcterms:modified">2018-10-16T00:00:00Z</meta>
+    <dc:identifier id="BookId">urn:uuid:00000000-0000-4000-8000-000000000000</dc:identifier>
+    <dc:creator id="aut-0">武藤健志</dc:creator>
+    <meta refines="#aut-0" property="role" scheme="marc:relators">aut</meta>
+    <meta refines="#aut-0" property="file-as">ムトウケンシ</meta>
+    <meta property="ebpaj:guide-version">1.1.3</meta>
+    <meta name="cover" content="images-cover-jpg"/>
+  </metadata>
+  <manifest>
+    <item properties="nav" id="syntax-book-toc.xhtml" href="syntax-book-toc.xhtml" media-type="application/xhtml+xml"/>
+    <item id="syntax-book" href="syntax-book.xhtml" media-type="application/xhtml+xml"/>
+    <item properties="cover-image" id="cover-images-cover-jpg" href="images/cover.jpg" media-type="image/jpeg"/>
+    <item id="appA-xhtml" href="appA.xhtml" media-type="application/xhtml+xml"/>
+    <item id="bib-xhtml" href="bib.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch01-xhtml" href="ch01.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch02-xhtml" href="ch02.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch03-xhtml" href="ch03.xhtml" media-type="application/xhtml+xml"/>
+    <item id="images-ball-png" href="images/ball.png" media-type="image/png"/>
+    <item id="images-fractal-png" href="images/fractal.png" media-type="image/png"/>
+    <item id="images-img3-1-png" href="images/img3-1.png" media-type="image/png"/>
+    <item id="images-img3-2-png" href="images/img3-2.png" media-type="image/png"/>
+    <item id="images-inlineicon-jpg" href="images/inlineicon.jpg" media-type="image/jpeg"/>
+    <item id="images-logic-png" href="images/logic.png" media-type="image/png"/>
+    <item id="images-logic2-png" href="images/logic2.png" media-type="image/png"/>
+    <item id="images-puzzle-jpg" href="images/puzzle.jpg" media-type="image/jpeg"/>
+    <item id="images-table-jpg" href="images/table.jpg" media-type="image/jpeg"/>
+    <item id="part2-xhtml" href="part2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="part_1-xhtml" href="part_1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="pre01-xhtml" href="pre01.xhtml" media-type="application/xhtml+xml"/>
+    <item id="style-css" href="style.css" media-type="text/css"/>
+    <item id="titlepage-xhtml" href="titlepage.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine page-progression-direction="ltr">
+    <itemref idref="syntax-book" linear="no"/>
+    <itemref idref="titlepage-xhtml"/>
+    <itemref idref="pre01-xhtml"/>
+    <itemref idref="part_1-xhtml"/>
+    <itemref idref="ch01-xhtml"/>
+    <itemref idref="part2-xhtml"/>
+    <itemref idref="ch02-xhtml"/>
+    <itemref idref="ch03-xhtml"/>
+    <itemref idref="appA-xhtml"/>
+    <itemref idref="bib-xhtml"/>
+  </spine>
+  <guide>
+    <reference type="cover" title="表紙" href="syntax-book.xhtml"/>
+    <reference type="title-page" title="大扉" href="titlepage.xhtml"/>
+    <reference type="toc" title="目次" href="syntax-book-toc.xhtml"/>
+  </guide>
+</package>

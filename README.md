@@ -1,13 +1,14 @@
 # pwsh-review
 
-A PowerShell 7+ port of [Re:VIEW](https://reviewml.org)'s **PDF generation pipeline** —
-the Ruby toolchain used to author technical books in a lightweight markup (`.re` files)
-and compile them to PDF via LaTeX.
+A PowerShell 7+ port of [Re:VIEW](https://reviewml.org)'s **PDF and EPUB3 generation
+pipelines** — the Ruby toolchain used to author technical books in a lightweight markup
+(`.re` files) and compile them to PDF via LaTeX, or to EPUB.
 
 Re:VIEW itself never implements LaTeX typesetting — it generates `.tex` and shells out to
 external `uplatex`/`dvipdfmx`/`mendex` binaries. This port does the same, except the LaTeX
 toolchain runs inside a Docker container (see [LaTeX backend](#latex-backend-docker)
-below) rather than assuming a native TeX Live/MiKTeX install.
+below) rather than assuming a native TeX Live/MiKTeX install. EPUB needs no external
+tools at all.
 
 ## Status
 
@@ -30,18 +31,28 @@ container) for:
 The pipeline includes the two-pass compile/index architecture, hand-ported LaTeX
 templates, colophon/author/history rendering, a restricted ERB-subset interpreter for
 project-local template overrides, and the Docker-backed `uplatex`×3 → `mendex`
-(conditional) → `dvipdfmx` build. 75 Pester tests pass.
+(conditional) → `dvipdfmx` build.
+
+**EPUB3 output (`Invoke-ReviewEpubMaker`) is byte-for-byte identical too** — compared with
+the real `review-epubmaker` 5.9.0, every file inside the `.epub` (chapter `.xhtml`, title
+page, cover, part pages, colophon, navigation document, OPF package, `container.xml`,
+`mimetype`) is identical, in the same zip entry order, for both syntax-book (checked-in
+goldens, `tests/Unit/GoldenEpub.Tests.ps1`) and FirstStepReVIEW-v3 (live oracle,
+`tests/Integration/FirstStepReVIEW.Tests.ps1`). The zip is written with .NET's
+`System.IO.Compression`, so EPUB builds need no Docker.
+
+98 Pester tests pass.
 
 The port tracks the **Re:VIEW 5.9.0 gem** (what the oracle image ships). Note the
 `review` source checkout used as porting reference is 5.11-dev; where the two differ
 (`@<href>{#anchor}` handling, table-row whitespace stripping, the `labelref`/`ref` inline
 ops, `review-jsbook.cls`), the port follows 5.9.0.
 
-## Scope (v1)
+## Scope
 
-1. **PDF pipeline only.** Compiler (markup parser) → LaTeX builder → Book/Catalog/Configure
-   model → PDF-maker orchestration. EPUB/HTML/text/IDGXML/Markdown/RST output formats are
-   out of scope for v1.
+1. **PDF and EPUB3 pipelines.** Compiler (markup parser) → LaTeX builder / HTML builder →
+   Book/Catalog/Configure model → PDF-maker / EPUB-maker orchestration. EPUB2, webmaker
+   HTML, text, IDGXML, Markdown and RST outputs are out of scope.
 2. **Shells out to real LaTeX tools** (`uplatex`/`platex`/`lualatex`, `dvipdfmx`,
    `mendex`) exactly as Ruby Re:VIEW does — this port does not reimplement LaTeX
    typesetting.
@@ -89,6 +100,11 @@ Invoke-ReviewPdfMaker -Path .\path\to\articles\config.yml -KeepBuildDir -IgnoreC
 # Generate only the LaTeX sources (every chapter .tex + __REVIEW_BOOK__.tex) -- no Docker
 # needed, handy for inspecting or diffing output:
 ConvertTo-ReviewLatex -Path .\path\to\articles\config.yml -OutputDirectory .\out-tex
+
+# Build an EPUB3 (<bookname>.epub next to config.yml) -- no Docker needed. -KeepBuildDir
+# keeps <bookname>-epub/ (with the unzipped package), like review-epubmaker --debug:
+Invoke-ReviewEpubMaker -Path .\path\to\articles\config.yml
+Invoke-ReviewEpubMaker -Path .\path\to\articles\config.yml -KeepBuildDir -Only ch01,ch02
 ```
 
 ### All-in-one Docker image
@@ -100,6 +116,7 @@ module and TeX Live, with no Ruby. Inside it the TeX tools run directly
 ```powershell
 docker build -f docker/Dockerfile -t pwsh-review:latest .
 docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-pdfmaker config.yml
+docker run --rm -v "${PWD}:/work" pwsh-review pwsh-review-epubmaker config.yml
 ```
 
 `Invoke-ReviewPdfMaker -LatexBackend Native` also works on any machine that has TeX Live
@@ -120,12 +137,23 @@ on `PATH`.
   behaves as Ruby does when MeCab isn't installed. Output only differs from a
   MeCab-enabled Ruby run for non-ASCII index terms that have no `makeindex_dic` entry;
   set `makeindex_mecab: false` to compare like with like.
+- EPUB: the `.epub` and `<bookname>-epub/` debug directory are written next to
+  `config.yml` (Ruby: `Dir.pwd`). The zip is created in-process (Ruby uses rubyzip or the
+  `zip` command); the entries and their order are the same, only zip-level metadata
+  (timestamps, compression) differs.
+- EPUB: Ruby's `image_size` check (warnings about over-large images) is not ported, and
+  the obsolete `coverfile`/`titlepagefile`/`backcoverfile`/`pubhistory` parameters are
+  warned about and ignored.
+- YAML maps are loaded unordered, so for metadata maps with **several** extra keys
+  (e.g. `aut: {name: …, file-as: …, role: …}`) the order of the resulting OPF
+  `<meta refines>` lines can differ from Ruby's. Single-extra-key maps (the common
+  `{name, file-as}`) are unaffected.
 
 ## Running the tests
 
 ```powershell
-Invoke-Pester tests\Unit          # fast, no Docker required (includes syntax-book goldens)
-Invoke-Pester tests\Integration    # Docker-backed: real PDF builds + live oracle diffs
+Invoke-Pester tests\Unit          # fast, no Docker required (syntax-book LaTeX + EPUB goldens)
+Invoke-Pester tests\Integration    # Docker-backed: real PDF/EPUB builds + live oracle diffs
 ```
 
 The FirstStepReVIEW-v3 integration test needs a checkout of that repo next to this one
@@ -136,12 +164,14 @@ the oracle output is produced on the fly. It is skipped if the checkout is missi
 To re-capture checked-in goldens (e.g. after changing a fixture under `tests/Fixtures/`):
 
 ```powershell
-pwsh tests\tools\Update-GoldenFixtures.ps1 [-Fixture syntax-book]
+pwsh tests\tools\Update-GoldenFixtures.ps1 [-Fixture syntax-book] [-Target latex,epub]
 ```
 
-Fixture images are zero-byte placeholders: only their *existence* affects the `.tex`.
-The oracle's LaTeX stage therefore fails as expected, but `--debug` keeps the `.tex`
-files.
+It runs `review-pdfmaker` and `review-epubmaker` in the oracle image and writes
+`tests/Golden/latex/<fixture>/*.tex` and `tests/Golden/epub/<fixture>/` (the generated
+package files plus `entries.txt`, the zip entry order). Fixture images are zero-byte
+placeholders: only their *existence* affects the output. The oracle's LaTeX stage
+therefore fails as expected, but `--debug` keeps the `.tex` files.
 
 ## Architecture
 
@@ -182,21 +212,26 @@ Classes/
   17.Converter.ps1           # one Compiler + one Builder instance per book
   18.LaTeXBox.ps1            # tcolorbox minicolumn styling (latexbox.rb)
   18b.ErbLiteTemplate.ps1    # restricted ERB-subset interpreter for project-local overrides
-  20.ExternalProcessRunner.ps1  # Docker-backed shell-out layer (see below)
+  18c.HTMLBuilder.ps1        # XHTML builder for EPUB (htmlbuilder.rb, htmlutils.rb)
+  20.ExternalProcessRunner.ps1  # Docker/Native shell-out layer (see below)
   19.PdfMaker.ps1            # orchestration (pdfmaker.rb) -- loaded after 20 despite the
                               #   filename number: array ORDER in PwshReview.psm1 controls
                               #   load order, not filename prefixes, since PdfMaker
                               #   references [ReviewProcessRunner] by type literal
+  19b.EpubMaker.ps1          # EPUB3 orchestration (epubmaker.rb + epubmaker/*.rb, htmltoc.rb)
 Private/
   LatexTemplates.ps1         # hand-ported config.erb / layout.tex.erb (New-ReviewLatexConfigBlock/
                               #   New-ReviewLatexLayout) -- plain functions, not class methods,
                               #   specifically so they can take a duck-typed binding parameter
                               #   without a forward-reference to ReviewPdfMaker
   ConvertTo-ReviewArgv.ps1   # minimal shellsplit-equivalent for texoptions/dvioptions strings
+  HtmlTemplates.ps1          # hand-ported html/layout-html5.html.erb (+ layouts/layout.html.erb)
 Public/
   Test-ReviewCatalog.ps1     # load + validate a book's catalog.yml
   Invoke-ReviewPdfMaker.ps1  # build config.yml -> PDF (the module's main entry point)
+  Invoke-ReviewEpubMaker.ps1 # build config.yml -> EPUB3 (no Docker)
   ConvertTo-ReviewLatex.ps1  # config.yml -> .tex sources only (no Docker)
+docker/                      # all-in-one pwsh-review Linux image (see docker/README.md)
 Resources/
   i18n/i18n.yml              # locale data (copied from review/lib/review/i18n.yml)
   latex/review-jsbook/*      # .sty/.cls files copied byte-for-byte from the 5.9.0 gem's
@@ -204,11 +239,12 @@ Resources/
                               #   interpreted by the engine itself, nothing to port
 tests/
   Unit/           # Pester, fast, no Docker -- exact-string builder tests, ERB subset,
-                  # class hygiene, and golden .tex diffs against tests/Golden/
-  Integration/    # Pester, Docker-gated (skips if Docker unavailable) -- real PDF builds
-                  # and live oracle diffs (incl. FirstStepReVIEW-v3)
+                  # class hygiene, and golden LaTeX/EPUB diffs against tests/Golden/
+  Integration/    # Pester, Docker-gated (skips if Docker unavailable) -- real PDF/EPUB
+                  # builds and live oracle diffs (incl. FirstStepReVIEW-v3)
   Fixtures/       # input projects for goldens (syntax-book, with placeholder images)
-  Golden/         # .tex captured from review-oracle:5.9 (LF, kept by .gitattributes)
+  Golden/         # latex/ and epub/ output captured from review-oracle:5.9
+                  # (LF, kept by .gitattributes)
   tools/Update-GoldenFixtures.ps1   # re-captures Golden/ from Fixtures/ via Docker
 ```
 
@@ -299,6 +335,15 @@ documented in code comments where they bite:
   a scripted rename into `$BBibpaperIndex`.
 - Ruby `puts` appends a newline **only if the string doesn't already end with one**; a
   naive port doubles blank lines.
+- **A `[string]` parameter turns `$null` into `""`** (the parameter-side twin of the
+  return-type rule above), so `if ($null -eq $Media)` never fires for a value passed
+  through one. Test with `[string]::IsNullOrEmpty`, or declare the parameter `[object]`.
+- **Ruby truthiness differs from PowerShell's**: `""`, `0` and `[]` are *true* in Ruby.
+  The HTML builder's `if anchor` emits `<a id="h"></a>` for an unnumbered chapter
+  (anchor `""`); a PowerShell `if ($anchor)` silently dropped it. Port `if x` as
+  `if ($null -ne $x)` unless the Ruby value can also be `false`.
+- **Pester treats `<name>` in a test title as a template variable** — a title containing
+  `<x/>` fails at discovery with a parser error.
 
 ### Two-pass compile/index architecture
 
@@ -341,6 +386,10 @@ later optimization, not required now. The PDF-maker orchestration replicates Rub
 exact sequence: `texcommand` ×2 unconditionally → conditional `mendex` pass + one more
 `texcommand` pass → unconditional final `texcommand` pass → conditional `dvipdfmx` pass.
 
+A second, `Native` backend runs the same commands directly from `PATH` in the build
+directory, exactly like Ruby. It is selected with `-LatexBackend Native` or
+`PWSHREVIEW_LATEX_BACKEND=Native`, which the all-in-one `docker/` image sets.
+
 ## Roadmap
 
 Each milestone is independently demonstrable:
@@ -377,8 +426,17 @@ Each milestone is independently demonstrable:
 - [x] **M6 — Full `FirstStepReVIEW-v3` end-to-end** vs. the Docker oracle. All 13
       `.tex` files identical; the PDF has the same page count (104) and identical
       extracted text.
+- [x] **All-in-one Docker image** (`docker/`): TeX Live + PowerShell + the module, no
+      Ruby; a `Native` LaTeX backend runs the TeX tools in-process inside it.
+- [x] **E1 — HTML builder.** Every chapter `.xhtml` of syntax-book and
+      FirstStepReVIEW-v3 identical to `review-epubmaker`'s.
+- [x] **E2 — EPUB3 maker.** Title page, cover, part pages, colophon, nav, OPF,
+      `container.xml` and .NET zip packaging; the whole package identical for both books.
+- [x] **E3 — Tests, docs, image.** syntax-book EPUB goldens, live FirstStepReVIEW-v3
+      EPUB oracle test, `pwsh-review-epubmaker` in the Docker image (identical output on
+      Linux).
 
-## Explicit non-goals / gaps (v1)
+## Explicit non-goals / gaps
 
 | Gap | Why |
 |---|---|
@@ -386,7 +444,9 @@ Each milestone is independently demonstrable:
 | MeCab Japanese index yomi/sort-key generation | `mendex` indexing itself still works without it |
 | `//graph` (dot/gnuplot/blockdiag/aafigure/plantuml/mermaid) and `math_format: imgmath` | Large external-tool surface, not exercised by the in-scope fixtures (`//texequation` itself renders as native LaTeX) |
 | Legacy flat-file catalog (`PREDEF`/`CHAPS`/`PART`/`POSTDEF` as plain text files) | `catalog.yml` is the modern format used by every in-scope fixture |
-| EPUB/HTML/text/IDGXML/Markdown/RST builders | Explicit v1 scope decision |
+| EPUB2 (`epubversion: 2`), webmaker HTML, text/IDGXML/Markdown/RST builders | Explicit scope decision (EPUB3 is Re:VIEW's default); `epubversion: 2` raises a clear error |
+| HTML syntax highlighting (`highlight: html: rouge/pygments`) | Needs a Rouge/Pygments port; raises a clear error. Without it, output matches Ruby's unhighlighted output |
+| EPUB `math_format: mathml` / `mathjax` / `imgmath` | Needs a TeX→MathML converter or an image renderer; raises a clear error. The default (math shown as LaTeX text) is supported |
 | `review-preproc` (`#@mapfile`/`#@maprange`) | Not required by any in-scope fixture |
 | `REVIEW_SAFE_MODE` bitmask enforcement | Stretch goal |
 | Arbitrary-Ruby `.erb` beyond the documented restricted grammar | Same risk category as `review-ext.rb` |

@@ -8,7 +8,8 @@
 #
 # Checks: every chapter .tex + __REVIEW_BOOK__.tex byte-for-byte identical to the
 # oracle's, then a full PDF build through the port with the same page count and
-# identical extracted text (PDF bytes differ only by creation-time metadata).
+# identical extracted text (PDF bytes differ only by creation-time metadata); and the
+# EPUB: every packaged file byte-identical to review-epubmaker's, same zip entry order.
 
 $moduleManifest = Join-Path $PSScriptRoot '..\..\PwshReview.psd1'
 Import-Module $moduleManifest -Force
@@ -75,5 +76,48 @@ Describe 'FirstStepReVIEW-v3 end-to-end parity with Ruby Re:VIEW 5.9.0 (M6)' -Sk
         $oursFacts = Get-PdfFacts $pdf.FullName
         $oursFacts.Pages | Should -Be $oracleFacts.Pages
         $oursFacts.TextHash | Should -Be $oracleFacts.TextHash
+    }
+}
+
+Describe 'FirstStepReVIEW-v3 EPUB parity with Ruby Re:VIEW 5.9.0' -Skip:(-not ($fixtureAvailable -and $dockerAvailable -and $oracleImageAvailable)) {
+    BeforeAll {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $articlesDir = Join-Path (Join-Path $PSScriptRoot '..\..\..\FirstStepReVIEW-v3') 'articles'
+        if ($env:PWSHREVIEW_FIRSTSTEP_PATH) { $articlesDir = Join-Path $env:PWSHREVIEW_FIRSTSTEP_PATH 'articles' }
+        $script:EpubOracleDir = Join-Path $TestDrive 'epub-oracle'
+        $script:EpubOursDir = Join-Path $TestDrive 'epub-ours'
+        foreach ($dir in $script:EpubOracleDir, $script:EpubOursDir) {
+            Copy-Item -LiteralPath $articlesDir -Destination $dir -Recurse
+            # dcterms:modified defaults to "now"; pin it so the OPFs are comparable.
+            Add-Content -LiteralPath (Join-Path $dir 'config.yml') -Value "`nmodified: `"2023-11-12T00:00:00Z`""
+        }
+
+        $env:MSYS_NO_PATHCONV = '1'
+        & docker run --rm -v "${script:EpubOracleDir}:/work" -w /work review-oracle:5.9 review-epubmaker --debug config.yml *> $null
+        $script:OraclePkg = Join-Path $script:EpubOracleDir 'FirstStepReVIEW-v3-epub/FirstStepReVIEW-v3-epub'
+
+        $script:OursEpub = Invoke-ReviewEpubMaker -Path (Join-Path $script:EpubOursDir 'config.yml') -KeepBuildDir 3>$null
+        $script:OursPkg = Join-Path $script:EpubOursDir 'FirstStepReVIEW-v3-epub/FirstStepReVIEW-v3-epub'
+
+        function Get-ZipEntries([string]$Path) {
+            $zip = [IO.Compression.ZipFile]::OpenRead($Path)
+            try { return @($zip.Entries | ForEach-Object FullName) } finally { $zip.Dispose() }
+        }
+    }
+
+    It 'packages every file byte-for-byte identical to review-epubmaker' {
+        $oracleFiles = @(Get-ChildItem -LiteralPath $script:OraclePkg -Recurse -File)
+        $oracleFiles.Count | Should -BeGreaterThan 20
+        $mismatches = foreach ($f in $oracleFiles) {
+            $rel = [IO.Path]::GetRelativePath($script:OraclePkg, $f.FullName)
+            $ours = Join-Path $script:OursPkg $rel
+            if (-not (Test-Path -LiteralPath $ours)) { "$rel (missing)"; continue }
+            if (-not [Linq.Enumerable]::SequenceEqual([IO.File]::ReadAllBytes($f.FullName), [IO.File]::ReadAllBytes($ours))) { $rel }
+        }
+        $mismatches | Should -BeNullOrEmpty
+    }
+
+    It 'zips the same entries in the same order' {
+        Get-ZipEntries $script:OursEpub.FullName | Should -Be (Get-ZipEntries (Join-Path $script:EpubOracleDir 'FirstStepReVIEW-v3.epub'))
     }
 }

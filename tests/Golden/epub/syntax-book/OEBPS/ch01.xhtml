@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:ops="http://www.idpf.org/2007/ops" xml:lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <meta name="generator" content="Re:VIEW" />
+  <title>章見出し</title>
+</head>
+<body>
+<h1><a id="h1"></a><span class="secno">第1章　</span>章見出し</h1>
+<div class="lead">
+<p>章にはリードが入ることがあります。図版や表が入ることはまずありませんが、<b>太字</b>くらいは使われることも。</p>
+<p>複数段落になる可能性もあります。</p>
+</div>
+<p>段落は普通に書き連ねていくだけです。段落間は空行を含めます。</p>
+<p>こんなかんじ</p>
+<p>です。空けない場合は、1つの段落として結合されます。TeXと違って文字種によって良い塩梅にスペースを入れてくれたりはしないので、特に英文の場合は注意が必要です。this is apen.と「apen」になってしまいます。行頭行末のスペース文字も詰められてしまうので、this is a pen.は途中改行せずに記述しなければなりません。</p>
+<p>通常段落は「字下げ」することを想定して表現されますが、たとえばコードをまたぐ</p>
+<div class="emlist-code">
+<pre class="emlist">&#39;hello!&#39; &#39;こんにちはWorld!&#39;
+</pre>
+</div>
+<p class="noindent">ようにしたい場合は、またいだ後の段落前に「<code class="tt">//noindent</code>」を入れておくことで字下げを抑止できます（そもそもこういうまたぎ行為は筆者の好みではありませんが）。</p>
+
+<h2><a id="h1-1"></a><span class="secno">1.1　</span>節見出し</h2>
+<p><code class="tt">=</code>の数で見出しレベルを表しますが、最大<code class="tt">=====</code>の5レベルまでの見出しがあり得ます（内部的にはレベル6まであるけれども非推奨で、一部のビルダでは動かない）。</p>
+<ul>
+<li><code class="tt">=</code>：章および部</li>
+<li><code class="tt">==</code>：節</li>
+<li><code class="tt">===</code>：項</li>
+<li><code class="tt">====</code>：段</li>
+<li><code class="tt">=====</code>：レベル5見出し</li>
+</ul>
+<p>「X.X.X」のように採番するか否かは<code class="tt">config.yml</code>の<code class="tt">secnolevel</code>パラメータで変動します<a id="fnb-f1" href="#fn-f1" class="noteref" epub:type="noteref">*1</a>。デフォルトは2（X.Xまで）ですが、このリファレンスドキュメントでは一応4（X.X.X.X）まで採番を試みています。</p>
+<div class="footnote" epub:type="footnote" id="fn-f1"><p class="footnote">[*1] 前述したように<code class="tt">PREDEF</code>、<code class="tt">POSTDEF</code>の場合は採番<b>しません</b>。</p></div>
+
+<h3><a id="h1-1-1"></a><span class="secno">1.1.1　</span>項見出し……に脚注を入れると<i>TeX</i>ではエラー</h3>
+<p><a id="fnb-f2" href="#fn-f2" class="noteref" epub:type="noteref">*2</a>という脚注を見出し箇所に入れようとするとTeXではエラーになります。見出しにそういうものを入れるべきではない、といえばそれまでですが。見出しにはインラインでの装飾タグが入る可能性があります。</p>
+<div class="footnote" epub:type="footnote" id="fn-f2"><p class="footnote">[*2] 本当は項の脚注</p></div>
+
+<h4><a id="h1-1-1-1"></a><span class="secno">1.1.1.1　</span>段見出し</h4>
+<p>ここまで採番することがあるケースがあるか、というとたまにあったりします。</p>
+
+<h5><a id="h1-1-1-1-1"></a>レベル5見出し</h5>
+<p>さすがにこのあたりのレベルは採番はしないですね。紙面では、:によるdescription箇条書きでは大きくなりすぎるような規模の場合にこのレベルの見出しを代用することがあります。</p>
+<p>あくまでも見出しなので、見出しの行にそのまま段落が続いてしまう見た目は期待と違います。</p>
+
+<h2><a id="h1-2"></a><span class="secno">1.2　</span>長い節見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</h2>
+
+<h3><a id="h1-2-1"></a><span class="secno">1.2.1　</span>長い項見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</h3>
+
+<h4><a id="h1-2-1-1"></a><span class="secno">1.2.1.1　</span>長い段見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</h4>
+
+<h5><a id="h1-2-1-1-1"></a>長いレベル5見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</h5>
+<p>また、nonumあるいはnotocを付けた見出しは、章であっても採番されません。前者nonumは採番なし・目次に含める、後者notocは採番なし・目次にも含めないという意味です。</p>
+
+<h3 id="ch01_nonum1">採番しない項見出し</h3>
+
+<h3><a id="h1-2-2"></a><span class="secno">1.2.2　</span>採番する項見出し</h3>
+<p>nodispを付けると、紙面には表示されず目次には含まれる見出しとなります（採番なし）。節以下のレベルで使うことはほとんどなく、たとえば「献辞」のように紙面には見出しを出したくないけれども目次には入れておきたい前付名などに使うことを想定しています。</p>
+
+<a id="ch01_nonum2" />
+<h2><a id="h1-3"></a><span class="secno">1.3　</span>箇条書き</h2>
+
+<h3><a id="h1-3-1"></a><span class="secno">1.3.1　</span>ナカグロ箇条書き</h3>
+<p>ナカグロ箇条書き（HTMLの<i>ul</i>、TeXの<i>itemize</i>）は<i>スペース</i>+<code class="tt">*</code>+<i>スペース</i>で表現します。インラインタグが含まれることがあります。</p>
+<ul>
+<li>箇条書き1</li>
+<li>箇条書き2<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></li>
+</ul>
+<p>入れ子ナカグロ箇条書きもあります。</p>
+<ul>
+<li>箇条書き1<ul>
+<li>箇条書き1-1</li>
+<li>箇条書き1-2<ul>
+<li>箇条書き1-2-1</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>箇条書き2<ul>
+<li>箇条書き2-1</li>
+</ul>
+</li>
+</ul>
+<p>箇条書きの間に別の要素（ぶらさがりの段落など）が入ることは標準では対応しておらず、どうしてもそういうのが必要な場合は途中でフックして変換後ソースを書き換えることになります。</p>
+
+<h3><a id="h1-3-2"></a><span class="secno">1.3.2　</span>番号箇条書き</h3>
+<p>番号箇条書き（HTMLの<i>ol</i>、TeXの<i>enumerate</i>）は<i>スペース</i>+<code class="tt">数字.</code>+<i>スペース</i>で表現します。</p>
+<ol>
+<li>箇条書き1</li>
+<li>箇条書き2<b>太字bold</b><code class="tt">等幅code</code></li>
+</ol>
+<p>olnumで一応番号が変更可能なことを期待していますが、Webブラウザだとだめなことが多いかもしれません。</p>
+<ol start="10">
+<li>箇条書き10</li>
+<li>箇条書き11</li>
+</ol>
+
+<h3><a id="h1-3-3"></a><span class="secno">1.3.3　</span>用語リスト</h3>
+<p>用語リスト（HTMLの<i>dl</i>、TeXの<i>description</i>）は<i>スペース</i>+<code class="tt">:</code>+<i>スペース</i>で見出しを、説明は行頭にタブかスペースを入れて表現します。</p>
+<dl>
+<dt>Alpha<b>bold太字</b><i>italicイタ</i><code class="tt">等幅code</code><a id="fnb-foot1" href="#fn-foot1" class="noteref" epub:type="noteref">*3</a></dt>
+<dd><i>DEC</i>の作っていた<b>RISC CPU</b>。<i>italicイタ</i><code class="tt">等幅code</code>浮動小数点数演算が速い。</dd>
+<dt>POWER</dt>
+<dd>IBMとモトローラが共同製作したRISC CPU。<br />派生としてPOWER PCがある。</dd>
+<dt>SPARC</dt>
+<dd>Sunが作っているRISC CPU。CPU数を増やすのが得意。</dd>
+</dl>
+<div class="footnote" epub:type="footnote" id="fn-foot1"><p class="footnote">[*3] 箇条書き見出しへの脚注。</p></div>
+<div class="emlist-code">
+<pre class="emlist"><b>bold太字</b><i>italicイタ</i>
+
+ : Alpha@&lt;b&gt;{bold太字}@&lt;i&gt;{italicイタ}@&lt;tt&gt;{等幅code}
+        @&lt;i&gt;{DEC}の作っていた@&lt;b&gt;{RISC CPU}。@&lt;i&gt;{italicイタ}@&lt;tt&gt;{等幅code}
+        浮動小数点数演算が速い。
+ : POWER
+        IBMとモトローラが共同製作したRISC CPU。@&lt;br&gt;{}
+        派生としてPOWER PCがある。
+ : SPARC
+        Sunが作っているRISC CPU。
+        CPU数を増やすのが得意。<span class="balloon">ふきだし説明</span>
+</pre>
+</div>
+<p>説明文に複数の段落を入れることは構文上できないので、<code class="tt">@</code><code class="tt">&lt;br&gt;{}</code>を入れて改行することで代替します。</p>
+</body>
+</html>

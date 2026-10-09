@@ -1,7 +1,8 @@
 # pwsh-review: a self-contained image with PowerShell 7, the PwshReview module and the
 # same TeX Live toolchain as the Ruby review-oracle image (docker-review/review-5.9), but
-# WITHOUT Ruby Re:VIEW. Inside this image the module runs uplatex/mendex/dvipdfmx
-# directly (PWSHREVIEW_LATEX_BACKEND=Native) instead of starting a container per call.
+# WITHOUT Ruby Re:VIEW. Builds PDF and EPUB. Inside this image the module runs
+# uplatex/mendex/dvipdfmx directly (PWSHREVIEW_LATEX_BACKEND=Native) instead of
+# starting a container per call.
 #
 # Build from the repository root (the build context must contain the module):
 #   docker build -f docker/Dockerfile -t pwsh-review:latest .
@@ -22,11 +23,10 @@ ENV LANG=C.UTF-8 \
 RUN mkdir -p /usr/share/man/man1
 
 # TeX toolchain: the same LaTeX package set as review-oracle:5.9 (so typesetting is
-# identical), minus Ruby. `zip` is what Re:VIEW's epubmaker shells out to for packaging
-# (config epubmaker.zip_stage1/zip_stage2), kept ready for the planned EPUB support.
+# identical), minus Ruby. (EPUB needs nothing extra: the module writes the zip itself.)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      ca-certificates curl zip \
+      ca-certificates curl \
       texlive-lang-japanese texlive-fonts-recommended texlive-latex-extra lmodern fonts-lmodern \
       cm-super tex-gyre fonts-texgyre texlive-pictures texlive-plain-generic texlive-luatex \
       texlive-extra-utils ghostscript gsfonts poppler-data poppler-utils \
@@ -65,19 +65,19 @@ COPY Resources /usr/local/share/powershell/Modules/PwshReview/Resources
 
 # review-pdfmaker-style command-line wrappers.
 COPY docker/bin/ /opt/pwsh-review/bin/
-RUN for cmd in pwsh-review-pdfmaker pwsh-review-tex; do \
+RUN for cmd in pwsh-review-pdfmaker pwsh-review-epubmaker pwsh-review-tex; do \
       printf '#!/bin/sh\nexec pwsh -NoLogo -NoProfile -File /opt/pwsh-review/bin/%s.ps1 "$@"\n' "$cmd" > "/usr/local/bin/$cmd" && \
       chmod +x "/usr/local/bin/$cmd"; \
     done && \
     pwsh -NoLogo -NoProfile -Command "Import-Module PwshReview -ErrorAction Stop; Get-Command -Module PwshReview | Out-String | Write-Host"
 
 # ---------------------------------------------------------------------------------------
-# Reserved for future features (EPUB etc.). Taken from docker-review/review-5.9/Dockerfile;
-# uncomment when the port gains the feature that needs it.
+# Reserved for future features. Taken from docker-review/review-5.9/Dockerfile; uncomment
+# when the port gains the feature that needs it.
 #
 # Node.js + Playwright (+ CJK/emoji fonts, ~350MB): used by Re:VIEW for browser-based
 # rendering, e.g. math_format: imgmath with the playwright converter
-# (config playwright_options).
+# (config playwright_options), and for webmaker/vivliostyle-style HTML builds.
 # ARG NODEJS_VERSION=20
 # RUN apt-get update && apt-get install -y --no-install-recommends gnupg && \
 #     curl -fsSL https://deb.nodesource.com/setup_${NODEJS_VERSION}.x | bash - && \

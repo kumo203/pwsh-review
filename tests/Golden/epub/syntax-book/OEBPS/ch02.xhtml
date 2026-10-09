@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:ops="http://www.idpf.org/2007/ops" xml:lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <meta name="generator" content="Re:VIEW" />
+  <title>長い章見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</title>
+</head>
+<body>
+<h1><a id="h2"></a><span class="secno">第2章　</span>長い章見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</h1>
+
+<h2><a id="h2-1"></a><span class="secno">2.1　</span>ブロック命令</h2>
+
+<h3><a id="h2-1-1"></a><span class="secno">2.1.1　</span>ソースコード</h3>
+<p>採番付きリストの場合はlistです（<span class="listref"><a href="./ch02.xhtml#list2-1">リスト2.1</a></span>）。</p>
+<div id="list2-1" class="caption-code">
+<p class="caption">リスト2.1: <b>Ruby</b>の<code class="tt">hello</code>コード<a id="fnb-f2-1" href="#fn-f2-1" class="noteref" epub:type="noteref">*1</a></p>
+<pre class="list language-ruby">puts &#39;Hello, World!&#39;
+</pre>
+</div>
+<div class="footnote" epub:type="footnote" id="fn-f2-1"><p class="footnote">[*1] コードハイライトは外部パッケージに委任しています。TeXではjlisting、HTMLではRouge？</p></div>
+<p>行番号と採番付きのリストはlistnumです。</p>
+<div id="list2-2" class="code">
+<p class="caption">リスト2.2: 行番号はリテラルな文字で特に加工はしていない</p>
+<pre class="list language-ruby"> 1: class Hello
+ 2:   def initialize
+ 3:     @msg = &#39;Hello, World!&#39;
+ 4:   end
+ 5: end
+</pre>
+</div>
+<p>採番なしはemlistを使います。キャプションはあったりなかったりします。</p>
+<div class="emlist-code">
+<pre class="emlist language-c">printf(&quot;hello&quot;);
+</pre>
+</div>
+<div class="emlist-code">
+<p class="caption">Python記法</p>
+<pre class="emlist language-python">print(&#39;hello&#39;);
+</pre>
+</div>
+<p>行番号付きのパターンとしてemlistnumがあります。</p>
+<div class="emlistnum-code">
+<pre class="emlist language-c"> 1: printf(&quot;hello&quot;);
+</pre>
+</div>
+<div class="emlistnum-code">
+<p class="caption">Python記法</p>
+<pre class="emlist language-python">101: print(&#39;hello&#39;);
+</pre>
+</div>
+<p>ソースコード引用を主ターゲットにするのには一応sourceというのを用意しています<a id="fnb-type" href="#fn-type" class="noteref" epub:type="noteref">*2</a>。</p>
+<div class="footnote" epub:type="footnote" id="fn-type"><p class="footnote">[*2] 書籍だと、いろいろ使い分けが必要なんですよ……（4、5パターンくらい使うことも）。普通の用途ではlistとemlistで十分だと思いますし、見た目も同じでよいのではないかと。TeXの抽象タグ名は変えてはいます。</p></div>
+<div class="source-code">
+<p class="caption">hello.rb</p>
+<pre class="source">puts &#39;Hello&#39;
+</pre>
+</div>
+<div class="source-code">
+<pre class="source">puts &#39;Hello&#39;
+</pre>
+</div>
+<p>実行例を示すとき用にはcmdを用意しています。いずれにせよ、商業書籍レベルでは必要なので用意しているものの、原稿レベルで書き手が使うコードブロックはほどほどの数に留めておいたほうがいいのではないかと思います。TeX版の紙面ではデフォルトは黒アミ。印刷によってはベタ黒塗りはちょっと怖いかもなので、あまり長々したものには使わないほうがいいですね。</p>
+<div class="cmd-code">
+<pre class="cmd">$ <b>ls /</b>
+</pre>
+</div>
+
+<h3><a id="h2-1-2"></a><span class="secno">2.1.2　</span>図</h3>
+<p>採番・キャプション付きの図の貼り付けはimageを使用します（<span class="imgref"><a href="./ch02.xhtml#ball">図2.1</a></span>）。図版ファイルは識別子とビルダが対応しているフォーマットから先着順に探索されます。詳細については<a href="https://github.com/kmuto/review/wiki/ImagePath" class="link">ImagePath</a>のドキュメントを参照してください。</p>
+<div id="ball" class="image">
+<img src="images/ball.png" alt="ボール&lt;a id=&quot;fnb-madebygimp&quot; href=&quot;#fn-madebygimp&quot; class=&quot;noteref&quot; epub:type=&quot;noteref&quot;&gt;*3&lt;/a&gt;" />
+<p class="caption">
+図2.1: ボール<a id="fnb-madebygimp" href="#fn-madebygimp" class="noteref" epub:type="noteref">*3</a>
+</p>
+</div>
+<div class="footnote" epub:type="footnote" id="fn-madebygimp"><p class="footnote">[*3] GIMPのフィルタで作成。<br />footnote内改行</p></div>
+<p class="noindent">（いちおう、<code class="tt">config.yml</code>ファイルに<code class="tt">footnotetext: true</code>を追加すれば、footnotemark/footnotetextを使うモードになりますが）</p>
+<p>採番なし、あるいはキャプションもなしのものはindepimageを使います。</p>
+<div id="logic" class="image">
+<img src="images/logic.png" alt="" />
+</div>
+<div id="logic2" class="image">
+<img src="images/logic2.png" alt="採番なしキャプション" />
+<p class="caption">
+図: 採番なしキャプション
+</p>
+</div>
+
+<h3><a id="h2-1-3"></a><span class="secno">2.1.3　</span>表</h3>
+<p>表はtableを使います。<span class="tableref"><a href="./ch02.xhtml#tab2-1">表2.1</a></span></p>
+<div id="tab2-1" class="table">
+<p class="caption">表2.1: 表の<b>例</b><a id="fnb-tabalign" href="#fn-tabalign" class="noteref" epub:type="noteref">*4</a></p>
+<table>
+<tr><th>A</th><th>B</th><th>C</th></tr>
+<tr><td>D</td><td>E<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></td><td>F<br />G</td></tr>
+<tr><td>H</td><td>I<a id="fnb-footi" href="#fn-footi" class="noteref" epub:type="noteref">*5</a></td><td>長いセルの折り返し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</td></tr>
+</table>
+</div>
+<div class="footnote" epub:type="footnote" id="fn-tabalign"><p class="footnote">[*4] 現状、表のalignmentとかjoinとかはRe:VIEW記法では対応していません。筆者自身の制作では<a href="https://kmuto.jp/d/?date=20120208#p01" class="link">https://kmuto.jp/d/?date=20120208#p01</a>みたいな手法を使っています。</p></div>
+<div class="footnote" epub:type="footnote" id="fn-footi"><p class="footnote">[*5] 表内の脚注っていろいろ難しいです。</p></div>
+<p>TeX向けにはtsizeでTeX形式の列指定自体は可能です。以下は<code class="inline-code tt">//tsize[|latex|p{10mm}p{18mm}|p{50mm}]</code>としています。</p>
+<div class="table">
+<table>
+<tr><th>A</th><th>B</th><th>C</th></tr>
+<tr><td>D</td><td>E<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></td><td>F<br />G</td></tr>
+<tr><td>H</td><td>I</td><td>長いセルの折り返し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</td></tr>
+</table>
+</div>
+<p>TeXの普通のクラスファイルだと、列指定はl,c,r,p（幅指定+左均等）しかないのですが、Re:VIEWのスタイルファイルでL（幅指定+左寄せ，均等なし）、C（幅指定+中寄せ）、R（幅指定+右寄せ）を指定可能です。</p>
+<p>あとは縦に長い表がTeXだとそのままはみ出してしまうのでlongtableがあるけれどもそれはまた問題がいろいろあり……。</p>
+<p>採番はしたくないけれどもキャプションは指定したいという場合はemtableがあります。</p>
+<div class="table">
+<p class="caption">キャプションを指定したいが採番はしたくない表</p>
+<table>
+<tr><th>A</th><td>B</td></tr>
+<tr><th>C</th><td>D</td></tr>
+</table>
+</div>
+<p>画像にしておいて貼り付けたほうがよさそうな場合はimgtableを使います（<span class="tableref"><a href="./ch02.xhtml#table">表2.2</a></span>）。</p>
+<div id="table" class="imgtable image">
+<p class="caption">表2.2: ポンチ表</p>
+<img src="images/table.jpg" alt="ポンチ表" />
+</div>
+
+<h3><a id="h2-1-4"></a><span class="secno">2.1.4　</span>囲み記事</h3>
+<p>//{〜//}の囲み記事の中には段落のみしか入らないものと想定します（箇条書きなどを入れたい場合はユーザーの責任で適宜、変換後ソースを加工してもらうことを前提とします）。</p>
+<p>引用はquoteで表現します。上下アキ、左インデント（2文字くらい？）が入るのが一般的でしょうか。</p>
+<blockquote><p>ここに引用文。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>2行目の引用文。</p></blockquote>
+<p>中寄せはcenteringです。</p>
+<p class="flushright">中寄せ本文。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p class="flushright">2行目の中寄せ本文。</p>
+<p>右寄せはflushrightです。</p>
+<p class="flushright">右寄せ本文。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p class="flushright">2行目の右寄せ本文。</p>
+<p>ノートnote。以降、キャプションあり/なしのパターンがあります。表現については結局紙面デザインに応じて千差万別になるものだと思いますので、基本デザインとしては何か囲み要素だとわかって、カスタマイズしやすければよい、という程度です。</p>
+<div class="note">
+<p class="caption">ノートの例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>ノート1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>ノート2。</p>
+</div>
+<div class="note">
+<p>ノート。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>メモmemo。</p>
+<div class="memo">
+<p class="caption">メモの例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>メモ1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>メモ2。</p>
+</div>
+<div class="memo">
+<p>メモ。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>Tips tip。</p>
+<div class="tip">
+<p class="caption">Tipsの例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>Tips1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>Tips2。</p>
+</div>
+<div class="tip">
+<p>Tips。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>情報 info。</p>
+<div class="info">
+<p class="caption">情報の例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>情報1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>情報2。</p>
+</div>
+<div class="info">
+<p>情報。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>注意 warning。</p>
+<div class="warning">
+<p class="caption">注意の例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>注意1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>注意2。</p>
+</div>
+<div class="warning">
+<p>注意。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>重要 important。</p>
+<div class="important">
+<p class="caption">重要の例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>重要1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>重要2。</p>
+</div>
+<div class="important">
+<p>重要。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>警告 caution。</p>
+<div class="caution">
+<p class="caption">警告の例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>警告1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>警告2。</p>
+</div>
+<div class="caution">
+<p>警告。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>注意 notice。</p>
+<div class="notice">
+<p class="caption">注意の例<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>注意1。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+<p>注意2。</p>
+</div>
+<div class="notice">
+<p>注意。<b>太字bold</b><i>italicイタ</i><code class="tt">等幅code</code></p>
+</div>
+<p>脚注が入ることもあり得ます。</p>
+<div class="notice">
+<p class="caption">脚注がある注意<a id="fnb-notice1" href="#fn-notice1" class="noteref" epub:type="noteref">*6</a></p>
+<p>こちらにも脚注<a id="fnb-notice2" href="#fn-notice2" class="noteref" epub:type="noteref">*7</a></p>
+</div>
+<div class="footnote" epub:type="footnote" id="fn-notice1"><p class="footnote">[*6] noticeの見出し側脚注です。</p></div>
+<div class="footnote" epub:type="footnote" id="fn-notice2"><p class="footnote">[*7] noticeの文章側脚注です。</p></div>
+
+<h2><a id="h2-2"></a><span class="secno">2.2　</span>後注</h2>
+<p>後注は脚注と同様の書式で、<code class="tt">//endnote</code>で内容<a id="endnoteb-end1" href="#endnote-end1" class="noteref" epub:type="noteref">(1)</a>、<code class="tt">@</code><code class="tt">&lt;endnote&gt;</code>で参照します<a id="endnoteb-end2" href="#endnote-end2" class="noteref" epub:type="noteref">(2)</a>。後注は<code class="tt">//printendnotes</code>を書いた箇所にまとめて書き出されます。ここではファイル末尾に置いています。</p>
+
+<h2><a id="h2-3"></a><span class="secno">2.3　</span>LaTeX式</h2>
+<p>LaTeX式はTeX紙面以外は保証されません。EPUBではMathML（<code class="tt">math_format: mathml</code>）を使えますが、表現や互換性が不足しており、LaTeXをバックエンドとして画像化する<code class="tt">math_format: imgmath</code>のほうがよさそうです。</p>
+<div class="equation">
+<pre>\sum_{i=1}^nf_n(x)
+</pre>
+</div>
+<div id="mc2" class="caption-equation">
+<p class="caption">式2.1: 質量とエネルギーの等価性</p>
+<div class="equation">
+<pre>E=mc^2
+</pre>
+</div>
+</div>
+<div class="equation">
+<pre>A = \left(
+\begin{array}{ccc}
+a_{11} &amp; \cdots &amp; a_{1n} \\
+\vdots &amp; \ddots &amp; \vdots \\
+a_{m1} &amp; \cdots &amp; a_{mn}
+\end{array}
+\right)
+</pre>
+</div>
+<p>式採番がほしいケースは多々発生しているので、標準の文法を拡張する必要があるように思っています（<span class="eqref"><a href="./ch02.xhtml#mc2">式2.1</a></span>）。</p>
+<p>段落中の式は<span class="equation">E=mc^2</span>というシンプルなものならまだよいのですが、<span class="equation">\sinh^{-1} x = \log(x + \sqrt{x^2 + 1}</span>のような形だと}のエスケープで読みにくめです。今のところRubyにあるようなフェンス文法を実装するのも難しいですね。<span class="equation">\sum_{i=1}^n</span> <span class="equation">\displaystyle\sum_{i=1}^n</span></p>
+
+<h2><a id="h2-4"></a><span class="secno">2.4　</span>インライン命令</h2>
+<a id="inlineop"></a>
+
+<h3><a id="h2-4-1"></a><span class="secno">2.4.1　</span>書体</h3>
+<p>本文での……キーワード<b class="kw">キーワード (keyword)</b><!-- IDX:キーワード --><a id="fnb-kw" href="#fn-kw" class="noteref" epub:type="noteref">*8</a>、太字<b>b太字</b>、イタリック<i>iイタリック</i>、等幅<code class="tt">tt等幅</code>、強調<strong>strong強調</strong>、強調<em>em強調</em>、下線<u>u下線</u>、等幅<code class="inline-code tt">code等幅</code>、等幅太字<code class="tt"><b>ttb等幅太字</b></code>、等幅イタリック<code class="tt"><i>tti等幅イタリック</i></code>、網カケ<span class="ami">amiアミ</span>、挿入<ins>ins挿入</ins>、削除<del>del削除</del>、16進UTF文字指定&#x3042;、インラインアイコン<img src="images/inlineicon.jpg" alt="[inlineicon]" /></p>
+<p>傍点@&lt;bou&gt;{bou傍点}、ルビ@&lt;ruby&gt;{愕然, がくぜん}、縦中横@&lt;tcy&gt;{90}、はTeXでは現状、別パッケージが必要です。</p>
+<ul>
+<li>kw, b, strong, emは同じ書体でよいでしょう。</li>
+<li>tt、codeは同じ書体でよいでしょう。</li>
+<li>amiはコードブロックの中で使うことを想定しています。</li>
+</ul>
+<div class="footnote" epub:type="footnote" id="fn-kw"><p class="footnote">[*8] キーワードのカッコは太字にしないほうがいいのかなと思いつつあります（手元の案件では太字にしないよう挙動を変えてしまっているほうが多い）。</p></div>
+<ul>
+<li>箇条書き内での……キーワード<b class="kw">キーワード (keyword)</b><!-- IDX:キーワード -->、太字<b>b太字</b>、イタリック<i>iイタリック</i>、等幅<code class="tt">tt等幅</code>、強調<strong>strong強調</strong>、強調<em>em強調</em>、下線<u>u下線</u>、等幅<code class="inline-code tt">code等幅</code>、等幅太字<code class="tt"><b>ttb等幅太字</b></code>、等幅イタリック<code class="tt"><i>tti等幅イタリック</i></code>、網カケ<span class="ami">amiアミ</span>、挿入<ins>ins挿入</ins>、削除<del>del削除</del>、16進UTF文字指定&#x3042;、インラインアイコン<img src="images/inlineicon.jpg" alt="[inlineicon]" /></li>
+</ul>
+<div class="table">
+<table>
+<tr><th>表内での……キーワード<b class="kw">キーワード (keyword)</b><!-- IDX:キーワード -->、太字<b>b太字</b>、イタリック<i>iイタリック</i>、等幅<code class="tt">tt等幅</code>、強調<strong>strong強調</strong>、強調<em>em強調</em>、下線<u>u下線</u>、等幅<code class="inline-code tt">code等幅</code>、等幅太字<code class="tt"><b>ttb等幅太字</b></code>、等幅イタリック<code class="tt"><i>tti等幅イタリック</i></code>、網カケ<span class="ami">amiアミ</span>、挿入<ins>ins挿入</ins>、削除<del>del削除</del>、16進UTF文字指定&#x3042;、インラインアイコン<img src="images/inlineicon.jpg" alt="[inlineicon]" /></th></tr>
+</table>
+</div>
+<p>コードブロック内では対応装飾は減らしてよいと考えます。代わりにballoonが追加されます。</p>
+<div class="emlist-code">
+<p class="caption">キャプション内での……キーワード<b class="kw">キーワード (keyword)</b><!-- IDX:キーワード -->、太字<b>b太字</b>、イタリック<i>iイタリック</i>、等幅<code class="tt">tt等幅</code>、強調<strong>strong強調</strong>、強調<em>em強調</em>、下線<u>u下線</u>、等幅<code class="inline-code tt">code等幅</code>、等幅太字<code class="tt"><b>ttb等幅太字</b></code>、等幅イタリック<code class="tt"><i>tti等幅イタリック</i></code>、網カケ<span class="ami">amiアミ</span>、挿入<ins>ins挿入</ins>、削除<del>del削除</del>、16進UTF文字指定&#x3042;、インラインアイコン<img src="images/inlineicon.jpg" alt="[inlineicon]" /></p>
+<pre class="emlist">コードブロック内での……
+太字<b>b太字</b>
+イタリック<i>iイタリック</i>
+下線<u>u下線</u>
+網カケ<span class="ami">amiアミ</span>    <span class="balloon">ふきだし説明</span>
+挿入<ins>ins挿入</ins>、削除<del>del削除</del>
+</pre>
+</div>
+
+<h3><a id="h2-4-2"></a><span class="secno">2.4.2　</span>見出し内 <b>BOLD</b>,<i>ITALIC</i>,<code class="tt">TT</code>,<strong>STRONG</strong>,<em>EM</em>,<code class="inline-code tt">CODE</code>,<code class="tt"><b>TTB</b></code>,<code class="tt"><i>TTI</i></code>,<span class="ami">AMI</span>,<span class="bou">BOU</span>,<b class="kw">KW</b><!-- IDX:KW -->,<u>UNDERLINE</u>,<ins>INS</ins>、<del>DEL</del></h3>
+
+<h3 id="crossref"><a id="h2-4-3"></a><span class="secno">2.4.3　</span>参照</h3>
+<ul>
+<li>章番号：<a href="./ch01.xhtml">第1章</a>、<a href="./appA.xhtml">付録A</a>、<a href="./part2.xhtml">第II部</a>、<a href="./bib.xhtml"></a></li>
+<li>章題：<a href="./ch01.xhtml">章見出し</a>、<a href="./part2.xhtml">部見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□</a>、<a href="./appA.xhtml">付録の見出し</a>、<a href="./bib.xhtml">参考文献</a></li>
+<li>章番号+題：<a href="./ch02.xhtml">第2章「長い章見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□」</a>、<a href="./part2.xhtml">第II部「部見出し■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□■□」</a>、<a href="./appA.xhtml">付録A「付録の見出し」</a>、<a href="./bib.xhtml">「参考文献」</a></li>
+</ul>
+<p>節や項への参照はhdまたはsecを使います。</p>
+<ul>
+<li><a href="ch02.xhtml#h2-1">「2.1 ブロック命令」</a>の<a href="ch02.xhtml#h2-1-2">「2.1.2 図」</a></li>
+<li><a href="ch02.xhtml#h2-4-3">「2.4.3 参照」</a></li>
+<li><a href="ch02.xhtml#h2-1">「2.1 ブロック命令」</a>の<a href="ch02.xhtml#h2-1-2">「2.1.2 図」</a></li>
+<li><a href="ch02.xhtml#h2-4-3">「2.4.3 参照」</a></li>
+<li><a href="ch02.xhtml#h2-1">2.1</a>の<a href="ch02.xhtml#h2-1-2">2.1.2</a></li>
+<li><a href="ch02.xhtml#h2-4-3">2.4.3</a></li>
+<li><a href="ch02.xhtml#h2-1">ブロック命令</a>の<a href="ch02.xhtml#h2-1-2">図</a></li>
+<li><a href="ch02.xhtml#h2-4-3">参照</a></li>
+<li>コラム参照 <a href="ch03.xhtml#column-2" class="columnref">コラム「コラムその2」</a></li>
+</ul>
+<p>他章への図表リスト参照の例です（<span class="listref"><a href="./pre01.xhtml#main1">リスト1</a></span>、<span class="imgref"><a href="./pre01.xhtml#fractal">図1</a></span>、<span class="tableref"><a href="./pre01.xhtml#tbl1">表1</a></span>、<span class="listref"><a href="./appA.xhtml#lista-1">リストA.1</a></span>、<span class="imgref"><a href="./appA.xhtml#puzzle">図A.1</a></span>、<span class="tableref"><a href="./appA.xhtml#taba-1">表A.1</a></span>）。</p>
+<p>なお、この「.」区切りなどのフォーマットは<code class="tt">i18n.yml</code>あるいは<code class="tt">locale.yml</code>でカスタマイズされ得る（format_number、format_number_header、format_number_without_chapter、format_number_header_without_chapter）ので、スタイルで固定化するのは避けるべきです。</p>
+<p>labelで定義したラベルへの参照の例です。EPUBだと<a href="#inlineop" class="link">#inlineop</a> TeXだと@&lt;href&gt;{inlineop} 。互換性がないのは気味が悪いですね。</p>
+<p>説明箇条書きはTeXで特殊な扱いをしているため、参照の確認を以下でしておきます。</p>
+<dl>
+<dt><a href="./ch01.xhtml">第1章</a></dt>
+<dd>章番号</dd>
+<dt><a href="./ch01.xhtml">章見出し</a></dt>
+<dd>章題</dd>
+<dt><a href="./ch01.xhtml">第1章「章見出し」</a></dt>
+<dd>章番号+題</dd>
+<dt><a href="ch02.xhtml#h2-4-3">「2.4.3 参照」</a></dt>
+<dd>節</dd>
+<dt><a href="ch03.xhtml#column-2" class="columnref">コラム「コラムその2」</a></dt>
+<dd>コラム参照</dd>
+</dl>
+<p>URLは@&lt;href&gt;を使います。<a href="https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong" class="link">https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong</a><a id="fnb-fnref" href="#fn-fnref" class="noteref" epub:type="noteref">*9</a></p>
+<div class="footnote" epub:type="footnote" id="fn-fnref"><p class="footnote">[*9] 脚注に長いURLを入れてみます。<a href="https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong" class="link">https://localhost/longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong</a></p></div>
+
+<h3><a id="h2-4-4"></a><span class="secno">2.4.4　</span>参考文献</h3>
+<p>参考文献<code class="tt">bib.re</code>ファイルへの文献参照は、<a href="bib.xhtml#bib-lins">[1]</a>とします。</p>
+
+<h3><a id="h2-4-5"></a><span class="secno">2.4.5　</span>索引</h3>
+<p><!-- IDX:索引 --><!-- IDX:index -->索引はTeXとIDGXML以外では妥当な動作を定義していません。idx<!-- IDX:索引&lt;&lt;&gt;&gt;idx -->は文中にも表示し、hidx<!-- IDX:索引&lt;&lt;&gt;&gt;hidx -->は文中からは隠した形の索引にします。読みはMecab<!-- IDX:Mecab -->があればそちらを使いますが、辞書ファイル<!-- IDX:辞書ファイル -->を直接定義することもできます。<!-- IDX:!&lt;&gt;&quot;$&amp;()~=|,./\{}?_[]*:;+%#()&#39;`^ --><!-- IDX:| --><!-- IDX:{ --><!-- IDX:} --></p>
+<p>idx, hidxいずれも=見出しの中には入れないようにし、後続の段落先頭にhidxで入れるように注意します（入れてしまうと目次などがおかしくなります）。</p>
+
+<h4><a id="h2-4-5-1"></a><span class="secno">2.4.5.1　</span>後注</h4>
+<div class="endnotes">
+<div class="endnote" id="endnote-end1"><p class="endnote">(1) 後注その1です。</p></div>
+<div class="endnote" id="endnote-end2"><p class="endnote">(2) 後注その2です。</p></div>
+</div>
+</body>
+</html>

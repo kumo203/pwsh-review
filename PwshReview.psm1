@@ -30,6 +30,7 @@ $script:ClassFiles = @(
     'Classes/18c.HTMLBuilder.ps1'
     'Classes/20.ExternalProcessRunner.ps1'
     'Classes/19.PdfMaker.ps1'
+    'Classes/19b.EpubMaker.ps1'
 )
 
 foreach ($relativePath in $script:ClassFiles) {
