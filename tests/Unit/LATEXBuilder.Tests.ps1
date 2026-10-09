@@ -123,5 +123,12 @@ puts "hi"
             $result.Contains('\reviewkw{GNU}') | Should -BeTrue
             $result.Contains('\reviewkw{API}') | Should -BeTrue
         }
+
+        It 'strips only the leading bullet/number marker from list items (Ruby sub, not gsub)' {
+            # Regression from FirstStepReVIEW-v3: `@<code>{*}` inside a bullet lost its `*`.
+            $result = New-TestChapterTex -Content "= T`n`n * a @<code>{*} b ** c`n`n 1. x 2. y`n"
+            $result.Contains('\item a \reviewcode{*} b ** c') | Should -BeTrue
+            $result.Contains('\item x 2. y') | Should -BeTrue
+        }
     }
 }

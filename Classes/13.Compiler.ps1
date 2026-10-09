@@ -450,7 +450,9 @@ class ReviewCompiler {
             if ($line -match '^#@') { return $false }
 
             $buf = [System.Collections.Generic.List[string]]::new()
-            $buf.Add($self.Text(($line -replace '\*+', '').Trim()))
+            # Ruby `sub` replaces only the FIRST match (the bullet); `-replace` is global
+            # and would also eat e.g. the `*` in `@<code>{*}`.
+            $buf.Add($self.Text(([regex]::new('\*+').Replace($line, '', 1)).Trim()))
             $F.WhileMatch([regex]::new('^\s+(?!\*)\S'), {
                 param($cont)
                 $buf.Add($self.Text($cont.Trim()))
@@ -497,7 +499,7 @@ class ReviewCompiler {
 
             $num = [regex]::Match($line, '(\d+)\.').Groups[1].Value
             $buf = [System.Collections.Generic.List[string]]::new()
-            $buf.Add($self.Text(($line -replace '\d+\.', '').Trim()))
+            $buf.Add($self.Text(([regex]::new('\d+\.').Replace($line, '', 1)).Trim()))
             $F.WhileMatch([regex]::new('^\s+(?!\d+\.)\S'), {
                 param($cont)
                 $buf.Add($self.Text($cont.Trim()))

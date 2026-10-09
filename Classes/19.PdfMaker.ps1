@@ -98,8 +98,10 @@ class ReviewPdfMaker {
             throw [ReviewApplicationError]::new($_.Exception.Message)
         }
 
-        [ReviewI18n]::Setup([string]$this.Config.Get('language'))
         $this.BaseDir = (Resolve-Path -LiteralPath (Split-Path -Parent $YamlFile)).ProviderPath
+        # Ruby: I18n.setup(language) reads locale.yml from Dir.pwd (the project dir when
+        # review-pdfmaker is run as documented); resolve it against BaseDir instead.
+        [ReviewI18n]::Setup([string]$this.Config.Get('language'), (Join-Path $this.BaseDir 'locale.yml'))
         $this.Debug = [bool]$this.Config.Get('debug')
 
         try {
