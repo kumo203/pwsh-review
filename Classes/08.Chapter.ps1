@@ -39,6 +39,20 @@ class ReviewChapter : ReviewBookUnit {
         }
     }
 
+    # Mirrors Chapter#generate_indexes: calls the base pass, then additionally pulls the
+    # image-family indexes off the (cached) IndexBuilder result -- these aren't set by
+    # the base BookUnit.GenerateIndexes() since Ruby's book_unit.rb doesn't set them
+    # either (only Chapter's and Part's own overrides do).
+    [void] GenerateIndexes([bool]$UseBib) {
+        ([ReviewBookUnit]$this).GenerateIndexes($UseBib)
+        if (-not $this.Content) { return }
+        $indexes = $this.ExecuteIndexer($false)
+        $this.NumberlessImageIndex = $indexes.NumberlessImageIndex
+        $this.ImageIndex = $indexes.ImageIndex
+        $this.IconIndex = $indexes.IconIndex
+        $this.IndepImageIndex = $indexes.IndepImageIndex
+    }
+
     [object] FindFirstHeaderOption() {
         $f = [ReviewLineInput]::FromString($this.Content)
         while ($f.Next()) {

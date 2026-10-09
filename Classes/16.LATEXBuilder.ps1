@@ -79,6 +79,16 @@ class ReviewLATEXBuilder : ReviewBuilder {
 
     hidden [string] chapter_label() { return "chap:$($this.Chapter.Id())" }
     hidden [string] sec_label([string]$Anchor) { return "sec:$Anchor" }
+    hidden [string] image_label([string]$Id, [object]$ChapterArg) {
+        $targetChapter = if ($ChapterArg) { $ChapterArg } else { $this.Chapter }
+        return "image:$($targetChapter.Id()):$Id"
+    }
+
+    hidden [string] table_label([string]$Id, [object]$ChapterArg) {
+        $targetChapter = if ($ChapterArg) { $ChapterArg } else { $this.Chapter }
+        return "table:$($targetChapter.Id()):$Id"
+    }
+
     hidden [string] column_label([string]$Id, [object]$ChapterArg) {
         $chapter = if ($ChapterArg) { $ChapterArg } else { $this.Chapter }
         return "column:$($chapter.Id()):$($chapter.GetColumn($Id).Number)"
@@ -473,4 +483,76 @@ class ReviewLATEXBuilder : ReviewBuilder {
     [string] inline_strong([string]$Str) { return $this.macro('reviewstrong', @($this.escape($Str))) }
     [string] inline_u([string]$Str) { return $this.macro('reviewunderline', @($this.escape($Str))) }
     [string] inline_ami([string]$Str) { return $this.macro('reviewami', @($this.escape($Str))) }
+
+    # Overrides of Builder's generic inline_list/inline_table/inline_img/inline_eq
+    # (14.Builder.ps1): LaTeX wraps the cross-reference in a \review*ref{} macro (for
+    # TeX-native \ref/\label wiring) instead of the generic "リスト2.1"-style plain text
+    # those base versions produce -- confirmed against the real Ruby Re:VIEW oracle,
+    # which emits \reviewlistref{2.1} for @<list>{otherchapter|id}, not the base
+    # class's plain-text rendering.
+    [string] inline_list([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetList($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -eq $chap) {
+                return $this.macro('reviewlistref', @([ReviewI18n]::T('format_number_without_chapter', @($num))))
+            }
+            return $this.macro('reviewlistref', @([ReviewI18n]::T('format_number', @($chap, $num))))
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown list: $Id")
+        }
+    }
+
+    [string] inline_table([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetTable($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            $label = $this.table_label($itemId, $targetChapter)
+            if ($null -eq $chap) {
+                return $this.macro('reviewtableref', @([ReviewI18n]::T('format_number_without_chapter', @($num)), $label))
+            }
+            return $this.macro('reviewtableref', @([ReviewI18n]::T('format_number', @($chap, $num)), $label))
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown table: $Id")
+        }
+    }
+
+    [string] inline_img([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetImage($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            $label = $this.image_label($itemId, $targetChapter)
+            if ($null -eq $chap) {
+                return $this.macro('reviewimageref', @([ReviewI18n]::T('format_number_without_chapter', @($num)), $label))
+            }
+            return $this.macro('reviewimageref', @([ReviewI18n]::T('format_number', @($chap, $num)), $label))
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown image: $Id")
+        }
+    }
+
+    [string] inline_eq([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetEquation($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -eq $chap) {
+                return $this.macro('reviewequationref', @([ReviewI18n]::T('format_number_without_chapter', @($num))))
+            }
+            return $this.macro('reviewequationref', @([ReviewI18n]::T('format_number', @($chap, $num))))
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown equation: $Id")
+        }
+    }
 }

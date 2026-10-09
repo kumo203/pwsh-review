@@ -11,21 +11,29 @@ below) rather than assuming a native TeX Live/MiKTeX install.
 
 ## Status
 
-**M0, M1, and M2 are complete; M3's core claim (cross-chapter references) is verified.**
-The module scaffold, Docker-backed process runner, `Configure`/`Catalog`/Book model, the
-full markup parser (`Compiler`), the pass-1 index builder, and a useful subset of the
-LaTeX builder (headlines, paragraphs, lists, captioned code blocks, footnotes, core
-inline formatting) are all in place and tested — 49 Pester tests pass.
+**M0 through M3 are complete.** The module scaffold, Docker-backed process runner,
+`Configure`/`Catalog`/Book model, the full markup parser (`Compiler`), the pass-1 index
+builder, and a useful subset of the LaTeX builder (headlines, paragraphs, lists,
+captioned code blocks, footnotes, core inline formatting, and cross-chapter reference
+resolution) are all in place and tested — 51 Pester tests pass.
 
 A representative chapter was compiled through this port and independently verified
 **byte-for-byte identical** against the real Ruby Re:VIEW running in the
 `review-oracle:5.9` Docker container (captured as a permanent regression test in
-`tests/Unit/LATEXBuilder.Tests.ps1`). Cross-chapter references (`@<chapref>`, `@<chap>`,
-`@<title>`, forward and backward) are verified against a 2-chapter fixture.
+`tests/Unit/LATEXBuilder.Tests.ps1`). Cross-chapter references — both chapter-level
+(`@<chapref>`, `@<chap>`, `@<title>`, forward and backward) and item-level (`@<list>`,
+`@<table>` via `otherchapter|id` syntax, resolving through that chapter's own index even
+though the chapter itself is never rendered) — are verified against 2-chapter fixtures,
+with the `\reviewlistref{}`/`\reviewtableref{}` output format double-checked against the
+Docker oracle (this surfaced a real gap: `LATEXBuilder` overrides the generic
+`inline_list`/`inline_table`/`inline_img`/`inline_eq` with TeX-native `\ref`/`\label`
+macro wrapping that a partial read of the 1469-line Ruby source had missed).
 
-Still to do: `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation` LaTeX rendering,
-the ERB template layer, and the actual PDF-maker orchestration that shells out to
-`uplatex`/`dvipdfmx`/`mendex`. See [Roadmap](#roadmap) below.
+Still to do: `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation` LaTeX *rendering*
+(the cross-reference *lookups* above work already; the block syntax that defines a table/
+image itself doesn't render yet), the ERB template layer, and the actual PDF-maker
+orchestration that shells out to `uplatex`/`dvipdfmx`/`mendex`. See
+[Roadmap](#roadmap) below.
 
 ## Scope (v1)
 
@@ -223,11 +231,13 @@ Each milestone is independently demonstrable:
       href/kw/ruby/br/...). Verified byte-for-byte against the Ruby oracle for a
       representative chapter. `//table`/`//image`/`//bibpaper`/`//graph`/`//texequation`
       deferred to M5.
-- [x] **M3 — Two-pass index builder wired in (core claim verified).** Cross-chapter
-      `@<chapref>`/`@<chap>`/`@<title>` resolve forward and backward against a 2-chapter
-      fixture. (`@<img>`/`@<list>` numbering works the same way once M5 adds image/table
-      rendering; the underlying index machinery is already exercised by `//list`'s own
-      caption-numbering path.)
+- [x] **M3 — Two-pass index builder wired in.** Cross-chapter `@<chapref>`/`@<chap>`/
+      `@<title>` (chapter-level) and `@<list>`/`@<table>` via `otherchapter|id` syntax
+      (item-level, through that chapter's own index without rendering it) resolve forward
+      and backward against 2-chapter fixtures, with output verified against the Docker
+      oracle. `@<img>`/`@<eq>` follow the identical code path and macro pattern
+      (`inline_img`/`inline_eq`) but full `//image`/`//texequation` block *rendering* —
+      and thus an end-to-end test of them — waits on M5.
 - [ ] **M4 — Real PDF output for a minimal fixture.** The hand-ported templates plus the
       Docker-backed process runner wired into the full build sequence, producing a real
       `.pdf`. First milestone that requires Docker Desktop running.

@@ -12,7 +12,7 @@ Describe 'Cross-chapter reference resolution' {
             [ReviewI18n]::Setup('ja')
 
             function New-TwoChapterBook {
-                param([string]$Ch01Content, [string]$Ch02Content)
+                param([string]$Ch01Content, [string]$Ch02Content, [string[]]$ConvertOnly = @('ch01', 'ch02'))
 
                 $dir = Join-Path $TestDrive ([guid]::NewGuid())
                 New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -26,8 +26,15 @@ Describe 'Cross-chapter reference resolution' {
                 $builder = [ReviewLATEXBuilder]::new()
                 $converter = [ReviewConverter]::new($book, $builder)
 
+                # Converting a chapter runs it through the real LATEXBuilder pass, which
+                # will fail on syntax this port doesn't render yet (//table/#//image are
+                # deferred to M5). The OTHER chapter's cross-reference still resolves
+                # correctly without converting it directly: Book.GenerateIndexes() (run
+                # from Bind() during the FIRST chapter's conversion) indexes every
+                # chapter via its own IndexBuilder pass regardless of which chapters are
+                # ever actually converted through LATEXBuilder.
                 $results = @{}
-                foreach ($name in @('ch01', 'ch02')) {
+                foreach ($name in $ConvertOnly) {
                     $outPath = Join-Path $dir "$name.tex"
                     $converter.Convert("$name.re", $outPath)
                     $results[$name] = Get-Content -Raw $outPath
@@ -70,6 +77,40 @@ Describe 'Cross-chapter reference resolution' {
             $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
 
             $results['ch01'].Contains('Second Chapter') | Should -BeTrue
+        }
+
+        It 'resolves a cross-chapter @<list> reference (ch01 -> a list numbered/captioned in ch02)' {
+            $ch01 = "= First Chapter`n`nSee @<list>{ch02|mylist} for details.`n"
+            $ch02 = @'
+= Second Chapter
+
+//list[mylist][My List]{
+some code
+//}
+'@
+            $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02
+            # LATEXBuilder overrides inline_list to wrap in \reviewlistref{} (TeX-native
+            # ref/label wiring) rather than the generic Builder's plain-text rendering --
+            # confirmed against the real Ruby Re:VIEW oracle (review-oracle:5.9).
+            $results['ch01'].Contains('\reviewlistref{2.1}') | Should -BeTrue
+        }
+
+        It 'resolves a cross-chapter @<table> reference (ch01 -> a table numbered in ch02)' {
+            $ch01 = "= First Chapter`n`nSee @<table>{ch02|mytable}.`n"
+            $ch02 = @'
+= Second Chapter
+
+//table[mytable][My Table]{
+a	b
+------------
+1	2
+//}
+'@
+            # //table isn't rendered by LATEXBuilder yet (deferred to M5), so only
+            # convert ch01 -- ch02's table is still indexed via Book.GenerateIndexes().
+            $results = New-TwoChapterBook -Ch01Content $ch01 -Ch02Content $ch02 -ConvertOnly @('ch01')
+            # Verified against the real Ruby Re:VIEW oracle: \reviewtableref{2.1}{table:ch02:mytable}
+            $results['ch01'].Contains('\reviewtableref{2.1}{table:ch02:mytable}') | Should -BeTrue
         }
 
         It 'throws a clear error for a reference to a nonexistent chapter' {

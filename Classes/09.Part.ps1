@@ -58,6 +58,17 @@ class ReviewPart : ReviewBookUnit {
         }
     }
 
+    # Mirrors Part#generate_indexes -- see the matching note in 08.Chapter.ps1.
+    [void] GenerateIndexes([bool]$UseBib) {
+        ([ReviewBookUnit]$this).GenerateIndexes($UseBib)
+        if (-not $this.Content) { return }
+        $indexes = $this.ExecuteIndexer($false)
+        $this.NumberlessImageIndex = $indexes.NumberlessImageIndex
+        $this.ImageIndex = $indexes.ImageIndex
+        $this.IconIndex = $indexes.IconIndex
+        $this.IndepImageIndex = $indexes.IndepImageIndex
+    }
+
     [bool] FileFlag() {
         return ($this.Name) -and ($this.Path) -and $this.Path.EndsWith('.re')
     }

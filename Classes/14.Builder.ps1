@@ -209,6 +209,86 @@ class ReviewBuilder {
         return $null
     }
 
+    # Cross-chapter numbered-item references (M3): "id" or "otherchapter|id", resolved
+    # via extract_chapter_id + the target chapter's own index (ListIndex/ImageIndex/
+    # TableIndex/EquationIndex -- all populated by IndexBuilder's pass over that OTHER
+    # chapter, which Book::GenerateIndexes() runs for every chapter up front, regardless
+    # of whether that chapter is itself ever rendered through LATEXBuilder). Mirrors
+    # Ruby's generic Builder#inline_list/#inline_img/#inline_table/#inline_eq exactly;
+    # LATEXBuilder does not override these.
+    [string] inline_list([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetList($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -ne $chap) {
+                return "$([ReviewI18n]::T('list'))$([ReviewI18n]::T('format_number', @($chap, $num)))"
+            }
+            return "$([ReviewI18n]::T('list'))$([ReviewI18n]::T('format_number_without_chapter', @($num)))"
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown list: $Id")
+        }
+    }
+
+    [string] inline_img([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetImage($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -ne $chap) {
+                return "$([ReviewI18n]::T('image'))$([ReviewI18n]::T('format_number', @($chap, $num)))"
+            }
+            return "$([ReviewI18n]::T('image'))$([ReviewI18n]::T('format_number_without_chapter', @($num)))"
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown image: $Id")
+        }
+    }
+
+    [string] inline_imgref([string]$Id) {
+        $img = $this.inline_img($Id)
+        $caption = $this.Chapter.GetImage($Id).Content()
+        if ($caption) {
+            return "$img$([ReviewI18n]::T('image_quote', $caption))"
+        }
+        return $img
+    }
+
+    [string] inline_table([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetTable($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -ne $chap) {
+                return "$([ReviewI18n]::T('table'))$([ReviewI18n]::T('format_number', @($chap, $num)))"
+            }
+            return "$([ReviewI18n]::T('table'))$([ReviewI18n]::T('format_number_without_chapter', @($num)))"
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown table: $Id")
+        }
+    }
+
+    [string] inline_eq([string]$Id) {
+        $resolved = $this.extract_chapter_id($Id)
+        $targetChapter = $resolved[0]; $itemId = $resolved[1]
+        try {
+            $num = $targetChapter.GetEquation($itemId).Number
+            $chap = $this.get_chap($targetChapter)
+            if ($null -ne $chap) {
+                return "$([ReviewI18n]::T('equation'))$([ReviewI18n]::T('format_number', @($chap, $num)))"
+            }
+            return "$([ReviewI18n]::T('equation'))$([ReviewI18n]::T('format_number_without_chapter', @($num)))"
+        }
+        catch [ReviewKeyError] {
+            throw [ReviewApplicationError]::new("unknown equation: $Id")
+        }
+    }
+
     [string] inline_fn([string]$Id) {
         try { return $this.Chapter.GetFootnote($Id).Content() }
         catch [ReviewKeyError] { throw [ReviewApplicationError]::new("unknown footnote: $Id") }
